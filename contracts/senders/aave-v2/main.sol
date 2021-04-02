@@ -56,6 +56,7 @@ abstract contract AaveResolver is Helpers, Events {
 contract AaveImportResolver is AaveResolver {
     struct AaveData {
         bool isFinal;
+        address targetDsa;
         uint[] supplyAmts;
         uint[] variableBorrowAmts;
         uint[] stableBorrowAmts;
@@ -63,20 +64,27 @@ contract AaveImportResolver is AaveResolver {
         address[] borrowTokens;
     }
 
-    mapping (address => AaveData) public records;
+    mapping (address => AaveData) public positions;
 
     function migrate(
+        address targetDsa,
         address[] calldata supplyTokens,
         address[] calldata borrowTokens
     ) external payable returns (string memory _eventName, bytes memory _eventParam) {
+        require(AccountInterface(address(this)).isAuth(msg.sender), "user-account-not-auth");
         require(supplyTokens.length > 0, "0-length-not-allowed");
+        require(targetDsa != address(0), "invalid-address");
 
         AaveData memory data;
 
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 
+        (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
+        require(healthFactor > 1e18, "position-not-safe");
+
         data.supplyAmts = new uint[](supplyTokens.length);
         data.supplyTokens = new address[](supplyTokens.length);
+        data.targetDsa = targetDsa;
 
         for (uint i = 0; i < supplyTokens.length; i++) {
             address _token = supplyTokens[i] == ethAddr ? wethAddr : supplyTokens[i];
@@ -113,7 +121,7 @@ contract AaveImportResolver is AaveResolver {
 
         _Withdraw(supplyTokens.length, aave, data.supplyTokens, data.supplyAmts);
 
-        records[msg.sender] = data;
+        positions[msg.sender] = data;
         bytes memory positionData = abi.encode(msg.sender, data);
         stateSender.syncState(polygonReceiver, positionData);
 
