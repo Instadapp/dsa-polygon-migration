@@ -68,9 +68,14 @@ interface ATokenInterface {
     function isTransferAllowed(address _user, uint256 _amount) external view returns (bool);
     function balanceOf(address _user) external view returns(uint256);
     function transferFrom(address, address, uint) external returns (bool);
+    function approve(address, uint256) external;
 }
 
-interface StateSenderInterface {
-    function syncState(address receiver, bytes calldata data) external;
-    function register(address sender, address receiver) external;
+interface AaveMigratorInterface {
+    function migrate(address, address[] calldata, address[] calldata) external;
 }
+
+// interface StateSenderInterface {
+//     function syncState(address receiver, bytes calldata data) external;
+//     function register(address sender, address receiver) external;
+// }
