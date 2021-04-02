@@ -64,7 +64,8 @@ contract AaveImportResolver is AaveResolver {
         address[] borrowTokens;
     }
 
-    mapping (address => AaveData) public positions;
+    // TODO - Move state syncing to Migrator
+    // mapping (address => AaveData) public positions;
 
     function migrate(
         address targetDsa,
@@ -115,15 +116,18 @@ contract AaveImportResolver is AaveResolver {
                 }
             }
 
+            // TODO - Request liquidity from Migrator
+
             _PaybackStable(borrowTokens.length, aave, data.borrowTokens, data.stableBorrowAmts, address(this));
             _PaybackVariable(borrowTokens.length, aave, data.borrowTokens, data.variableBorrowAmts, address(this));
         }
 
         _Withdraw(supplyTokens.length, aave, data.supplyTokens, data.supplyAmts);
 
-        positions[msg.sender] = data;
-        bytes memory positionData = abi.encode(msg.sender, data);
-        stateSender.syncState(polygonReceiver, positionData);
+        // TODO - Move state syncing to Migrator
+        // positions[msg.sender] = data;
+        // bytes memory positionData = abi.encode(msg.sender, data);
+        // stateSender.syncState(polygonReceiver, positionData);
 
         _eventName = "LogAaveV2Migrate(address,address[],address[],uint256[],uint256[],uint256[])";
         _eventParam = abi.encode(
