@@ -1,12 +1,17 @@
 pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { TokenInterface, AccountInterface } from "../../common/interfaces.sol";
 import { AaveInterface, ReceiverInterface, AaveData } from "./interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { Events } from "./events.sol";
 
 contract AaveMigratorResolver is Helpers, Events {
+    using SafeERC20 for IERC20;
+
     ReceiverInterface public immutable receiver;
 
     constructor(address _receiver) {
@@ -42,6 +47,9 @@ contract AaveMigratorResolver is Helpers, Events {
             if (stableAmt > 0) {
                 aave.borrow(token, stableAmt, 1, referralCode, address(this));
             }
+
+            uint totalAmt = add(variableAmt, stableAmt);
+            IERC20(token).safeTransfer(address(receiver), totalAmt);
         }
     }
 }
