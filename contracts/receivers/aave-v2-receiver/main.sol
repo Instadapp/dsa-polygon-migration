@@ -106,7 +106,6 @@ contract AaveV2Migrator is MigrateResolver {
     }
 
     function migrate(address owner) external {
-        require(msg.sender == owner, "not-authorized");
         require(canMigrate(owner), "not-enough-liquidity");
 
         _migratePosition(owner);
