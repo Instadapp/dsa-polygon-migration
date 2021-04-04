@@ -68,6 +68,8 @@ contract AaveV2Migrator is MigrateResolver {
     function _migratePosition(address owner) internal {
         AaveData storage data = positions[owner];
 
+        require(!data.isFinal, "already-migrated");
+
         for (uint i = 0; i < data.supplyTokens.length; i++) {
             IERC20(data.supplyTokens[i]).safeTransfer(data.targetDsa, data.supplyAmts[i]);
         }
