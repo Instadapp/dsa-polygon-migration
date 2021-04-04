@@ -34,6 +34,8 @@ contract LiquidityResolver is Helpers {
 }
 
 contract MigrateResolver is LiquidityResolver {
+    using SafeERC20 for IERC20;
+    
     struct AaveData {
         bool isFinal;
         address targetDsa;

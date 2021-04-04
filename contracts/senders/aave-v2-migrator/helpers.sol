@@ -14,7 +14,7 @@ abstract contract Helpers is DSMath, Stores {
     /**
      * @dev Aave referal code
      */
-    uint16 constant internal referalCode = 3228;
+    uint16 constant internal referralCode = 3228;
 
     address constant internal polygonReceiver = address(2); // Replace this
 

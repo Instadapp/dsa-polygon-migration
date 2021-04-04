@@ -13,7 +13,7 @@ abstract contract Helpers is DSMath, Stores {
     /**
      * @dev Aave referal code
      */
-    uint16 constant internal referalCode = 3228;
+    uint16 constant internal referralCode = 3228;
 
     /**
      * @dev Aave Provider (TODO - Replace the address)
@@ -25,7 +25,7 @@ abstract contract Helpers is DSMath, Stores {
      */
     AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d);
 
-    function getIsColl(address token, address user) internal view returns (bool isCol) {
-        (, , , , , , , , isCol) = aaveData.getUserReserveData(token, user);
+    function getIsColl(address token) internal view returns (bool isCol) {
+        (, , , , , , , , isCol) = aaveData.getUserReserveData(token, address(this));
     }
 }
