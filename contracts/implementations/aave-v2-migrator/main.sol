@@ -4,8 +4,9 @@ pragma experimental ABIEncoderV2;
 import { TokenInterface, AccountInterface } from "../../common/interfaces.sol";
 import { AaveInterface, ReceiverInterface, AaveData } from "./interfaces.sol";
 import { Helpers } from "./helpers.sol";
+import { Events } from "./events.sol";
 
-contract AaveMigratorResolver is Helpers {
+contract AaveMigratorResolver is Helpers, Events {
     ReceiverInterface public immutable receiver;
 
     constructor(address _receiver) {

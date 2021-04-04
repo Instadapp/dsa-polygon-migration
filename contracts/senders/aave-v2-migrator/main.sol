@@ -7,8 +7,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TokenInterface } from "../../common/interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { AaveInterface, ATokenInterface } from "./interfaces.sol";
+import { Events } from "./events.sol";
 
-contract LiquidityResolver is Helpers {
+contract LiquidityResolver is Helpers, Events {
     using SafeERC20 for IERC20;
 
     mapping(address => mapping(address => uint)) deposits;
@@ -16,6 +17,8 @@ contract LiquidityResolver is Helpers {
     function deposit(address[] calldata tokens, uint[] calldata amts) external payable {
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
+
+        uint[] memory _amts = new uint[](_length);
 
         for (uint256 i = 0; i < _length; i++) {
             uint _amt;
@@ -31,13 +34,19 @@ contract LiquidityResolver is Helpers {
                 tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
             }
 
+            _amts[i] = _amt;
+
             deposits[msg.sender][_token] = _amt;
         }
+
+        emit LogDeposit(msg.sender, tokens, _amts);
     }
 
     function withdraw(address[] calldata tokens, uint[] calldata amts) external {
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
+
+        uint[] memory _amts = new uint[](_length);
 
         for (uint256 i = 0; i < _length; i++) {
             uint _amt = amts[i];
@@ -55,8 +64,12 @@ contract LiquidityResolver is Helpers {
                 IERC20(_token).safeTransfer(msg.sender, _amt);
             }
 
+            _amts[i] = _amt;
+
             deposits[msg.sender][_token] = sub(maxAmt, _amt);
         }
+
+        emit LogWithdraw(msg.sender, tokens, _amts);
     }
 }
 
@@ -140,5 +153,15 @@ contract MigrateResolver is LiquidityResolver {
         positions[owner] = data;
         bytes memory positionData = abi.encode(owner, data);
         stateSender.syncState(polygonReceiver, positionData);
+
+        emit LogAaveV2Migrate(
+            msg.sender,
+            targetDsa,
+            supplyTokens,
+            borrowTokens,
+            data.supplyAmts,
+            data.variableBorrowAmts,
+            data.stableBorrowAmts
+        );
     }
 }
