@@ -4,22 +4,12 @@ pragma experimental ABIEncoderV2;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { DSMath } from "../../common/math.sol";
-import { AccountInterface } from "./interfaces.sol";
+import { AccountInterface, AaveData } from "./interfaces.sol";
 import { Events } from "./events.sol";
+import { Helpers } from "./helpers.sol";
 
-contract MigrateResolver is DSMath, Events {
+contract MigrateResolver is Helpers, Events {
     using SafeERC20 for IERC20;
-
-    struct AaveData {
-        bool isFinal;
-        address targetDsa;
-        uint[] supplyAmts;
-        uint[] variableBorrowAmts;
-        uint[] stableBorrowAmts;
-        address[] supplyTokens;
-        address[] borrowTokens;
-    }
 
     mapping (address => AaveData) public positions;
     mapping(address => mapping(address => uint)) deposits;
@@ -108,7 +98,7 @@ contract AaveV2Migrator is MigrateResolver {
         lastStateId = stateId;
 
         (address owner, AaveData memory data) = abi.decode(receivedData, (address, AaveData));
-        positions[owner] = data;
+        positions[owner] = remapTokens(data);
 
         if (canMigrate(owner)) {
             _migratePosition(owner);

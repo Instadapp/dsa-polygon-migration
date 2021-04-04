@@ -73,9 +73,15 @@ interface ATokenInterface {
 
 interface AaveMigratorInterface {
     function migrate(address, address, address[] calldata, address[] calldata) external;
+    function migrate(address, AaveData memory) external;
 }
 
-// interface StateSenderInterface {
-//     function syncState(address receiver, bytes calldata data) external;
-//     function register(address sender, address receiver) external;
-// }
+struct AaveData {
+    bool isFinal;
+    address targetDsa;
+    uint[] supplyAmts;
+    uint[] variableBorrowAmts;
+    uint[] stableBorrowAmts;
+    address[] supplyTokens;
+    address[] borrowTokens;
+}

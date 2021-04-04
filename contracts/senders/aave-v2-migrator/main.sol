@@ -88,67 +88,64 @@ contract MigrateResolver is LiquidityResolver {
 
     mapping (address => AaveData) public positions;
 
-    function migrate(
-        address owner,
-        address targetDsa,
-        address[] calldata supplyTokens,
-        address[] calldata borrowTokens
-    ) external {
-        require(supplyTokens.length > 0, "0-length-not-allowed");
-        require(targetDsa != address(0), "invalid-address");
+    function migrate(address owner, AaveData calldata _data) external {
+        require(_data.supplyTokens.length > 0, "0-length-not-allowed");
+        require(_data.targetDsa != address(0), "invalid-address");
+        require(_data.supplyTokens.length == _data.supplyAmts.length, "invalid-length");
+        require(
+            _data.borrowTokens.length == _data.variableBorrowAmts.length &&
+            _data.borrowTokens.length == _data.stableBorrowAmts.length,
+            "invalid-length"
+        );
+
+        AaveData memory data;
+
+        data.borrowTokens = _data.borrowTokens;
+        data.isFinal = _data.isFinal;
+        data.stableBorrowAmts = _data.stableBorrowAmts;
+        data.supplyAmts = _data.supplyAmts;
+        data.supplyTokens = _data.supplyTokens;
+        data.targetDsa = _data.targetDsa;
+        data.variableBorrowAmts = _data.variableBorrowAmts;
 
         address sourceDsa = msg.sender;
 
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 
-        AaveData memory data;
-
         (,,,,,uint healthFactor) = aave.getUserAccountData(sourceDsa);
         require(healthFactor > 1e18, "position-not-safe");
 
-        data.supplyAmts = new uint[](supplyTokens.length);
-        data.supplyTokens = new address[](supplyTokens.length);
-        data.targetDsa = targetDsa;
-
-        for (uint i = 0; i < supplyTokens.length; i++) {
-            address _token = supplyTokens[i] == ethAddr ? wethAddr : supplyTokens[i];
-            (address _aToken, ,) = aaveData.getReserveTokensAddresses(_token);
-
+        for (uint i = 0; i < data.supplyTokens.length; i++) {
+            (address _aToken, ,) = aaveData.getReserveTokensAddresses(data.supplyTokens[i]);
             ATokenInterface aTokenContract = ATokenInterface(_aToken);
-
-            data.supplyTokens[i] = _token;
-            data.supplyAmts[i] = aTokenContract.balanceOf(sourceDsa);
 
             aTokenContract.transferFrom(msg.sender, address(this), data.supplyAmts[i]);
         }
 
-        if (borrowTokens.length > 0) {
-            data.variableBorrowAmts = new uint[](borrowTokens.length);
-            data.stableBorrowAmts = new uint[](borrowTokens.length);
+        for (uint i = 0; i < data.borrowTokens.length; i++) {
+            address _token = data.borrowTokens[i] == ethAddr ? wethAddr : data.borrowTokens[i];
+            data.borrowTokens[i] = _token;
 
-            for (uint i = 0; i < borrowTokens.length; i++) {
-                address _token = borrowTokens[i] == ethAddr ? wethAddr : borrowTokens[i];
-                data.borrowTokens[i] = _token;
+            (
+                ,
+                uint stableDebt,
+                uint variableDebt,
+                ,,,,,
+            ) = aaveData.getUserReserveData(_token, sourceDsa);
 
-                (
-                    ,
-                    data.stableBorrowAmts[i],
-                    data.variableBorrowAmts[i],
-                    ,,,,,
-                ) = aaveData.getUserReserveData(_token, sourceDsa);
+            data.stableBorrowAmts[i] = data.stableBorrowAmts[i] == uint(-1) ? stableDebt : data.stableBorrowAmts[i];
+            data.variableBorrowAmts[i] = data.variableBorrowAmts[i] == uint(-1) ? variableDebt : data.variableBorrowAmts[i];
 
-                uint totalBorrowAmt = add(data.stableBorrowAmts[i], data.variableBorrowAmts[i]);
 
-                if (totalBorrowAmt > 0) {
-                    IERC20(_token).safeApprove(address(aave), totalBorrowAmt);
-                }
+            uint totalBorrowAmt = add(data.stableBorrowAmts[i], data.variableBorrowAmts[i]);
+            if (totalBorrowAmt > 0) {
+                IERC20(_token).safeApprove(address(aave), totalBorrowAmt);
             }
-
-            _PaybackStable(borrowTokens.length, aave, data.borrowTokens, data.stableBorrowAmts, sourceDsa);
-            _PaybackVariable(borrowTokens.length, aave, data.borrowTokens, data.variableBorrowAmts, sourceDsa);
         }
 
-        _Withdraw(supplyTokens.length, aave, data.supplyTokens, data.supplyAmts);
+        _PaybackStable(data.borrowTokens.length, aave, data.borrowTokens, data.stableBorrowAmts, sourceDsa);
+        _PaybackVariable(data.borrowTokens.length, aave, data.borrowTokens, data.variableBorrowAmts, sourceDsa);
+        _Withdraw(data.supplyTokens.length, aave, data.supplyTokens, data.supplyAmts);
 
         positions[owner] = data;
         bytes memory positionData = abi.encode(owner, data);
@@ -156,12 +153,89 @@ contract MigrateResolver is LiquidityResolver {
 
         emit LogAaveV2Migrate(
             msg.sender,
-            targetDsa,
-            supplyTokens,
-            borrowTokens,
+            data.targetDsa,
+            data.supplyTokens,
+            data.borrowTokens,
             data.supplyAmts,
             data.variableBorrowAmts,
             data.stableBorrowAmts
         );
     }
+
+    // function migrate(
+    //     address owner,
+    //     address targetDsa,
+    //     address[] calldata supplyTokens,
+    //     address[] calldata borrowTokens
+    // ) external {
+    //     require(supplyTokens.length > 0, "0-length-not-allowed");
+    //     require(targetDsa != address(0), "invalid-address");
+
+    //     address sourceDsa = msg.sender;
+
+    //     AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+
+    //     AaveData memory data;
+
+    //     (,,,,,uint healthFactor) = aave.getUserAccountData(sourceDsa);
+    //     require(healthFactor > 1e18, "position-not-safe");
+
+    //     data.supplyAmts = new uint[](supplyTokens.length);
+    //     data.supplyTokens = new address[](supplyTokens.length);
+    //     data.targetDsa = targetDsa;
+
+    //     for (uint i = 0; i < supplyTokens.length; i++) {
+    //         address _token = supplyTokens[i] == ethAddr ? wethAddr : supplyTokens[i];
+    //         (address _aToken, ,) = aaveData.getReserveTokensAddresses(_token);
+
+    //         ATokenInterface aTokenContract = ATokenInterface(_aToken);
+
+    //         data.supplyTokens[i] = _token;
+    //         data.supplyAmts[i] = aTokenContract.balanceOf(sourceDsa);
+
+    //         aTokenContract.transferFrom(msg.sender, address(this), data.supplyAmts[i]);
+    //     }
+
+    //     if (borrowTokens.length > 0) {
+    //         data.variableBorrowAmts = new uint[](borrowTokens.length);
+    //         data.stableBorrowAmts = new uint[](borrowTokens.length);
+
+    //         for (uint i = 0; i < borrowTokens.length; i++) {
+    //             address _token = borrowTokens[i] == ethAddr ? wethAddr : borrowTokens[i];
+    //             data.borrowTokens[i] = _token;
+
+    //             (
+    //                 ,
+    //                 data.stableBorrowAmts[i],
+    //                 data.variableBorrowAmts[i],
+    //                 ,,,,,
+    //             ) = aaveData.getUserReserveData(_token, sourceDsa);
+
+    //             uint totalBorrowAmt = add(data.stableBorrowAmts[i], data.variableBorrowAmts[i]);
+
+    //             if (totalBorrowAmt > 0) {
+    //                 IERC20(_token).safeApprove(address(aave), totalBorrowAmt);
+    //             }
+    //         }
+
+    //         _PaybackStable(borrowTokens.length, aave, data.borrowTokens, data.stableBorrowAmts, sourceDsa);
+    //         _PaybackVariable(borrowTokens.length, aave, data.borrowTokens, data.variableBorrowAmts, sourceDsa);
+    //     }
+
+    //     _Withdraw(supplyTokens.length, aave, data.supplyTokens, data.supplyAmts);
+
+    //     positions[owner] = data;
+    //     bytes memory positionData = abi.encode(owner, data);
+    //     stateSender.syncState(polygonReceiver, positionData);
+
+    //     emit LogAaveV2Migrate(
+    //         msg.sender,
+    //         targetDsa,
+    //         supplyTokens,
+    //         borrowTokens,
+    //         data.supplyAmts,
+    //         data.variableBorrowAmts,
+    //         data.stableBorrowAmts
+    //     );
+    // }
 }
