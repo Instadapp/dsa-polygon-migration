@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import { TokenInterface } from "../../common/interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { AaveInterface, ATokenInterface } from "./interfaces.sol";
 
@@ -22,13 +23,39 @@ contract LiquidityResolver is Helpers {
             if (_token == ethAddr) {
                 require(msg.value == amts[i]);
                 _amt = msg.value;
+
+                TokenInterface(wethAddr).deposit{value: msg.value}();
             } else {
                 IERC20 tokenContract = IERC20(_token);
                 _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
                 tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
             }
 
-            deposits[_token][msg.sender] = _amt;
+            deposits[msg.sender][_token] = _amt;
+        }
+    }
+
+    function withdraw(address[] calldata tokens, uint[] calldata amts) external {
+        uint _length = tokens.length;
+        require(_length == amts.length, "invalid-length");
+
+        for (uint256 i = 0; i < _length; i++) {
+            uint _amt = amts[i];
+            address _token = tokens[i];
+            uint maxAmt = deposits[msg.sender][_token];
+
+            if (_amt > maxAmt) {
+                _amt = maxAmt;
+            }
+
+            if (_token == ethAddr) {
+                TokenInterface(wethAddr).withdraw(_amt);
+                msg.sender.call{value: _amt}("");
+            } else {
+                IERC20(_token).safeTransfer(msg.sender, _amt);
+            }
+
+            deposits[msg.sender][_token] = sub(maxAmt, _amt);
         }
     }
 }
