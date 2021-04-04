@@ -71,11 +71,16 @@ interface ATokenInterface {
     function approve(address, uint256) external;
 }
 
-interface AaveMigratorInterface {
-    function migrate(address, address, address[] calldata, address[] calldata) external;
+struct AaveData {
+    bool isFinal;
+    address targetDsa;
+    uint[] supplyAmts;
+    uint[] variableBorrowAmts;
+    uint[] stableBorrowAmts;
+    address[] supplyTokens;
+    address[] borrowTokens;
 }
 
-// interface StateSenderInterface {
-//     function syncState(address receiver, bytes calldata data) external;
-//     function register(address sender, address receiver) external;
-// }
+interface ReceiverInterface {
+    function getPosition(address) external view returns (AaveData memory);
+}

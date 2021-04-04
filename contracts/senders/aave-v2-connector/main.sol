@@ -23,7 +23,7 @@ contract AaveMigrateResolver is Helpers, Events {
             _aTokenContract.approve(address(migrator), _aTokenContract.balanceOf(address(this)));
         }
 
-        migrator.migrate(targetDsa, supplyTokens, borrowTokens);
+        migrator.migrate(msg.sender, targetDsa, supplyTokens, borrowTokens);
 
         _eventName = "LogAaveV2Migrate(address,address,address[],address[])";
         _eventParam = abi.encode(msg.sender, targetDsa, supplyTokens, borrowTokens);

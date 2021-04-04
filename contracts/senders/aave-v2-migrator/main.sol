@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { TokenInterface } from "../../common/interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { AaveInterface, ATokenInterface } from "./interfaces.sol";
 
@@ -48,6 +47,7 @@ contract MigrateResolver is LiquidityResolver {
     mapping (address => AaveData) public positions;
 
     function migrate(
+        address owner,
         address targetDsa,
         address[] calldata supplyTokens,
         address[] calldata borrowTokens
@@ -72,8 +72,12 @@ contract MigrateResolver is LiquidityResolver {
             address _token = supplyTokens[i] == ethAddr ? wethAddr : supplyTokens[i];
             (address _aToken, ,) = aaveData.getReserveTokensAddresses(_token);
 
+            ATokenInterface aTokenContract = ATokenInterface(_aToken);
+
             data.supplyTokens[i] = _token;
-            data.supplyAmts[i] = ATokenInterface(_aToken).balanceOf(sourceDsa);
+            data.supplyAmts[i] = aTokenContract.balanceOf(sourceDsa);
+
+            aTokenContract.transferFrom(msg.sender, address(this), data.supplyAmts[i]);
         }
 
         if (borrowTokens.length > 0) {
@@ -94,7 +98,7 @@ contract MigrateResolver is LiquidityResolver {
                 uint totalBorrowAmt = add(data.stableBorrowAmts[i], data.variableBorrowAmts[i]);
 
                 if (totalBorrowAmt > 0) {
-                    TokenInterface(_token).approve(address(aave), totalBorrowAmt);
+                    IERC20(_token).safeApprove(address(aave), totalBorrowAmt);
                 }
             }
 
@@ -104,8 +108,8 @@ contract MigrateResolver is LiquidityResolver {
 
         _Withdraw(supplyTokens.length, aave, data.supplyTokens, data.supplyAmts);
 
-        positions[sourceDsa] = data;
-        bytes memory positionData = abi.encode(sourceDsa, data);
+        positions[owner] = data;
+        bytes memory positionData = abi.encode(owner, data);
         stateSender.syncState(polygonReceiver, positionData);
     }
 }
