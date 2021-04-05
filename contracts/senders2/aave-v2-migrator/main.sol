@@ -23,6 +23,13 @@ contract LiquidityResolver is Helpers, Events {
     // InstaIndex Address.
     IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
 
+    function updateVariables(uint _safeRatioGap, uint _fee) public {
+        require(msg.sender == instaIndex.master(), "not-master");
+        safeRatioGap = _safeRatioGap;
+        fee = _fee;
+        // TODO: Add event
+    }
+
     function spell(address _target, bytes memory _data) external {
         require(msg.sender == instaIndex.master(), "not-master");
         require(_target != address(0), "target-invalid");
@@ -111,7 +118,7 @@ contract LiquidityResolver is Helpers, Events {
 contract MigrateResolver is LiquidityResolver {
     using SafeERC20 for IERC20;
 
-    function _migrate(address l2DSA, AaveDataRaw memory _data, address sourceDsa) internal {
+    function _migrate(AaveDataRaw memory _data, address sourceDsa) internal {
         require(_data.supplyTokens.length > 0, "0-length-not-allowed");
         require(_data.targetDsa != address(0), "invalid-address");
         require(_data.supplyTokens.length == _data.supplyAmts.length, "invalid-length");
@@ -131,7 +138,7 @@ contract MigrateResolver is LiquidityResolver {
         _PaybackStable(_data.borrowTokens.length, aave, _data.borrowTokens, stableBorrows, sourceDsa);
         _PaybackVariable(_data.borrowTokens.length, aave, _data.borrowTokens, variableBorrows, sourceDsa);
 
-        (uint[] totalSupplies) = _getAtokens(aave, _data.supplyTokens, _data.supplyAmts);
+        (uint[] totalSupplies) = _getAtokens(aave, _data.supplyTokens, _data.supplyAmts, fee);
 
         // Aave on Polygon doesn't have stable borrowing so we'll borrow all the debt in variable
         AaveData memory data;
@@ -147,7 +154,7 @@ contract MigrateResolver is LiquidityResolver {
         bool isOk = _checkRatio(data, safeRatioGap);
         require(isOk, "position-risky-to-migrate");
 
-        bytes memory positionData = abi.encode(l2DSA, data); // TODO: Can we do anything else to make the data more secure? (It's secure already)
+        bytes memory positionData = data; // TODO: Can we do anything else to make the data more secure? (It's secure already)
         stateSender.syncState(polygonReceiver, positionData);
 
         emit LogAaveV2Migrate(
@@ -161,12 +168,12 @@ contract MigrateResolver is LiquidityResolver {
         );
     }
 
-    function migrate(address l2DSA, AaveDataRaw calldata _data) external {
-        _migrate(l2DSA, _data, msg.sender);
+    function migrate(AaveDataRaw calldata _data) external {
+        _migrate(_data, msg.sender);
     }
 
-    function migrateWithFlash(address l2DSA, AaveDataRaw calldata _data, uint ethAmt) external {
-        bytes data = abi.encode(l2DSA, _data, msg.sender, ethAmt);
+    function migrateWithFlash(AaveDataRaw calldata _data, uint ethAmt) external {
+        bytes data = abi.encode(_data, msg.sender, ethAmt);
         
         // TODO: integrate dydx flashloan and borrow "ethAmt" and transfer ETH to this address
 

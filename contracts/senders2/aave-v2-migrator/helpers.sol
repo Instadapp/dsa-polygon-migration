@@ -109,11 +109,12 @@ abstract contract Helpers is DSMath, Stores {
         }
     }
 
-    function _getAtokens(AaveInterface aave, address[] memory supplyTokens, uint[] memory supplyAmts) internal returns (uint[] finalAmts) {
+    function _getAtokens(AaveInterface aave, address[] memory supplyTokens, uint[] memory supplyAmts, uint fee) internal returns (uint[] finalAmts) {
         for (uint i = 0; i < supplyTokens.length; i++) {
             (address _aToken, ,) = aaveData.getReserveTokensAddresses(supplyTokens[i]);
             ATokenInterface aTokenContract = ATokenInterface(_aToken);
 
+            // TODO: deduct the fee from finalAmt
             if (supplyAmts[i] == uint(-1)) {
                 // TODO: get maximum balance and set the return variable
             } else {
