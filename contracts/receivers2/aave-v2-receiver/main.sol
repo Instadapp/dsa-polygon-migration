@@ -13,7 +13,7 @@ contract MigrateResolver is Helpers, Events {
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
     // TODO: Is this number correct for it?
-    uint public safeRatioGap = 20000000000000000; // 20%?
+    uint public safeRatioGap = 200000000000000000; // 20%? 2e17
 
     // dsa => position
     mapping(uint => AaveData) public positions;
