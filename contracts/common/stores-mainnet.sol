@@ -7,8 +7,6 @@ abstract contract Stores {
 
     /**
     * @dev Return ethereum address
-    * ETH on Mainnet
-    * MATIC on Polygon
     */
     address constant internal ethAddr = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 

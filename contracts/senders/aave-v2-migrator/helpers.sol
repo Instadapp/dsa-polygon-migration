@@ -1,7 +1,7 @@
 pragma solidity ^0.7.0;
 
 import { DSMath } from "../../common/math.sol";
-import { Stores } from "../../common/stores.sol";
+import { Stores } from "../../common/stores-mainnet.sol";
 
 import { 
     AaveLendingPoolProviderInterface,

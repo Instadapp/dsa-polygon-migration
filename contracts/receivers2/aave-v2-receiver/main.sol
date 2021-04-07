@@ -3,20 +3,13 @@ pragma experimental ABIEncoderV2;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import { AccountInterface, AaveData, IndexInterface } from "./interfaces.sol";
+import { TokenInterface } from "../../common/interfaces.sol";
+import { AccountInterface, AaveData, AaveInterface, IndexInterface } from "./interfaces.sol";
 import { Events } from "./events.sol";
 import { Helpers } from "./helpers.sol";
 
 contract MigrateResolver is Helpers, Events {
     using SafeERC20 for IERC20;
-
-    // dsa => position
-    mapping(uint => bytes) public positions;
-    mapping(address => mapping(address => uint)) public deposits;
-
-    // InstaIndex Address.
-    IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
 
     function spell(address _target, bytes memory _data) external {
         require(msg.sender == instaIndex.master(), "not-master");
@@ -34,35 +27,50 @@ contract MigrateResolver is Helpers, Events {
         }
     }
 
-    // TODO: Deposit in Aave
-    function deposit(address[] calldata tokens, uint[] calldata amts) external {
+    // TODO: @mubaris Make this similar to L1 migrator. Have to change ETH by MATIC
+    function deposit(address[] calldata tokens, uint[] calldata amts) external payable {
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
+
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 
         uint[] memory _amts = new uint[](_length);
 
         for (uint256 i = 0; i < _length; i++) {
+            require(isSupportedToken[tokens[i]], "token-not-enabled");
+            uint _amt;
             address _token = tokens[i];
-            
-            IERC20 tokenContract = IERC20(_token);
-            uint _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
-            tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
+            if (_token == maticAddr) {
+                require(msg.value == amts[i]);
+                _amt = msg.value;
+                TokenInterface(wmaticAddr).deposit{value: msg.value}();
+                aave.deposit(wmaticAddr, _amt, address(this), 3288);
+            } else {
+                IERC20 tokenContract = IERC20(_token);
+                _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
+                tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
+                aave.deposit(_token, _amt, address(this), 3288);
+            }
+
+            _amts[i] = _amt;
 
             deposits[msg.sender][_token] += _amt;
-            _amts[i] = _amt;
         }
 
         emit LogDeposit(msg.sender, tokens, _amts);
     }
 
-    // TODO: Withdraw from Aave
+    // TODO: @mubaris Make this similar to L1 migrator. Have to change ETH by MATIC
     function withdraw(address[] calldata tokens, uint[] calldata amts) external {
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
 
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+
         uint[] memory _amts = new uint[](_length);
 
         for (uint256 i = 0; i < _length; i++) {
+            require(isSupportedToken[tokens[i]], "token-not-enabled");
             uint _amt = amts[i];
             address _token = tokens[i];
             uint maxAmt = deposits[msg.sender][_token];
@@ -71,11 +79,27 @@ contract MigrateResolver is Helpers, Events {
                 _amt = maxAmt;
             }
 
-            IERC20(_token).safeTransfer(msg.sender, _amt);
-
-            deposits[msg.sender][_token] = sub(maxAmt, _amt);
+            if (_token == maticAddr) {
+                TokenInterface _tokenContract = TokenInterface(wmaticAddr);
+                uint _maticBal = address(this).balance;
+                uint _tknBal = _tokenContract.balanceOf(address(this));
+                if ((_maticBal + _tknBal) < _amt) {
+                    aave.withdraw(wmaticAddr, sub(_amt, (_tknBal + _maticBal)), address(this));
+                }
+                _tokenContract.withdraw((sub(_amt, _maticBal)));
+                msg.sender.call{value: _amt}("");
+            } else {
+                IERC20 _tokenContract = IERC20(_token);
+                uint _tknBal = _tokenContract.balanceOf(address(this));
+                if (_tknBal < _amt) {
+                    aave.withdraw(_token, sub(_amt, _tknBal), address(this));
+                }
+                _tokenContract.safeTransfer(msg.sender, _amt);
+            }
 
             _amts[i] = _amt;
+
+            deposits[msg.sender][_token] = sub(maxAmt, _amt);
         }
 
         isPositionSafe();
@@ -83,9 +107,10 @@ contract MigrateResolver is Helpers, Events {
         emit LogWithdraw(msg.sender, tokens, _amts);
     }
 
-    // TODO: Things to factor
+    // TODO: @mubaris Things to factor
     // If there is same token supply and borrow, then close the smaller one
-    // If there is ideal token then payback or deposit according to the position
+    // If there is ideal token (other than flashAmt) then payback or deposit according to the position
+    // Keep flashAmt tokens as ideal
     // Object is the decrease the ratio and pay as less interest
     function settle() external {
 
@@ -107,43 +132,34 @@ contract AaveV2Migrator is MigrateResolver {
         address[] memory supplyTokens = _data.supplyTokens;
         address[] memory borrowTokens = _data.borrowTokens;
 
-        transferAtokens(dsa, supplyTokens, supplyAmts);
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 
-        // Have to borrow from user's account
-        borrowAndTransferSpells(dsa, borrowTokens, borrowAmts);
+        transferAtokens(aave, dsa, supplyTokens, supplyAmts);
+
+        // Have to borrow from user's account & transfer
+        borrowAndTransferSpells(aave, dsa, borrowTokens, borrowAmts);
 
         isPositionSafe();
     }
 
-    // function getPosition(address owner) public view returns (AaveData memory data) {
-    //     data = positions[owner];
-    // }
-
-    // TODO: have to add more conditions
+    // TODO: @mubaris - Do we need this?
     function canMigrate(AaveData memory data) public view returns (bool can) {
-        // can = true;
 
-        // AaveData memory data = getPosition(owner);
-
-        // for (uint i = 0; i < data.supplyTokens.length; i++) {
-        //     IERC20 token = IERC20(data.supplyTokens[i]);
-        //     if (token.balanceOf(address(this)) < data.supplyAmts[i]) {
-        //         can = false;
-        //     }
-        // }
     }
 
     function onStateReceive(uint256 stateId, bytes calldata receivedData) external {
         require(stateId > lastStateId, "wrong-data");
         lastStateId = stateId;
 
-        // (AaveData memory data) = abi.decode(receivedData, (AaveData));
-        positions[stateId] = receivedData; // TODO: what's the best way to store user's data to create position later
+        // TODO: what's the best way to store user's data to create position later.
+        // Can't do it via any address as user can migrate 2 times 
+        positions[stateId] = receivedData;
 
     }
 
     function migrate(uint _id) external {
         bytes memory _data = positions[_id];
+
         require(_data != bytes(0), "already-migrated"); // TODO: How to resolve this
         
         AaveData memory data = abi.decode(_data, (AaveData));
