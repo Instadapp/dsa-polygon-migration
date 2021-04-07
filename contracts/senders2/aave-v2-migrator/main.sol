@@ -106,11 +106,14 @@ contract LiquidityResolver is Helpers, Events {
         emit LogWithdraw(msg.sender, tokens, _amts);
     }
 
-    // TODO: payback if debt else deposit
-    // TODO: if ratio is safe then transfer excess collateral to L2 migration contract
+    // TODO: Things to factor
+    // If there is same token supply and borrow, then close the smaller one
+    // If there is ideal token then payback or deposit according to the position
+    // Object is the decrease the ratio and pay as less interest
+    // If ratio is safe then transfer excess collateral to L2 migration contract
     // Always, keep 1000 wei WETH ideal for flashloan
-    function settle(address[] calldata tokens) external {
-        
+    function settle() external {
+
     }
 
 }

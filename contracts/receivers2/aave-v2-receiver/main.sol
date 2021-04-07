@@ -11,13 +11,9 @@ import { Helpers } from "./helpers.sol";
 contract MigrateResolver is Helpers, Events {
     using SafeERC20 for IERC20;
 
-    // This will be used to have debt/collateral ratio always 20% less than liquidation
-    // TODO: Is this number correct for it?
-    uint public safeRatioGap = 200000000000000000; // 20%? 2e17
-
     // dsa => position
     mapping(uint => bytes) public positions;
-    mapping(address => mapping(address => uint)) deposits;
+    mapping(address => mapping(address => uint)) public deposits;
 
     // InstaIndex Address.
     IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
@@ -82,8 +78,19 @@ contract MigrateResolver is Helpers, Events {
             _amts[i] = _amt;
         }
 
+        isPositionSafe();
+
         emit LogWithdraw(msg.sender, tokens, _amts);
     }
+
+    // TODO: Things to factor
+    // If there is same token supply and borrow, then close the smaller one
+    // If there is ideal token then payback or deposit according to the position
+    // Object is the decrease the ratio and pay as less interest
+    function settle() external {
+
+    }
+
 }
 
 contract AaveV2Migrator is MigrateResolver {
@@ -105,7 +112,7 @@ contract AaveV2Migrator is MigrateResolver {
         // Have to borrow from user's account
         borrowAndTransferSpells(dsa, borrowTokens, borrowAmts);
 
-        // TODO: Final position should be 20% less than liquidation (use 'safeRatioGap', Also should we check this at start?)
+        isPositionSafe();
     }
 
     // function getPosition(address owner) public view returns (AaveData memory data) {

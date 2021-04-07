@@ -15,6 +15,10 @@ import {
 abstract contract Helpers is DSMath {
     using SafeERC20 for IERC20;
 
+    // This will be used to have debt/collateral ratio always 20% less than liquidation
+    // TODO: Is this number correct for it?
+    uint public safeRatioGap = 200000000000000000; // 20%? 2e17
+
     // TODO: Add function for flash deposits and withdraw
     mapping(address => mapping(address => uint)) flashDeposits; // Flash deposits of particular token
     mapping(address => uint) flashAmts; // token amount for flashloan usage (these token will always stay raw in this contract)
@@ -34,6 +38,11 @@ abstract contract Helpers is DSMath {
         }
 
         return data;
+    }
+
+    function isPositionSafe() internal returns (bool isOk) {
+        // TODO: Check the final position health
+        require(isOk, "position-at-risk");
     }
 
     function transferAtokens(address dsa, address[] memory supplyTokens, uint[] memory supplyAmts) internal {
