@@ -3,6 +3,9 @@ pragma solidity >=0.7.0;
 import { DSMath } from "../../common/math.sol";
 import { Stores } from "../../common/stores.sol";
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { 
     AaveLendingPoolProviderInterface,
     AaveDataProviderInterface,
@@ -11,6 +14,8 @@ import {
 } from "./interfaces.sol";
 
 abstract contract Helpers is DSMath, Stores {
+
+    using SafeERC20 for IERC20;
 
     struct AaveDataRaw {
         address targetDsa;
@@ -87,9 +92,9 @@ abstract contract Helpers is DSMath, Stores {
     }
 
     function _PaybackCalculate(AaveInterface aave, AaveDataRaw memory _data, address sourceDsa) internal returns (uint[] stableBorrow, uint[] variableBorrow, uint[] totalBorrow) {
-        for (uint i = 0; i < data.borrowTokens.length; i++) {
-            address _token = data.borrowTokens[i] == ethAddr ? wethAddr : data.borrowTokens[i];
-            data.borrowTokens[i] = _token;
+        for (uint i = 0; i < _data.borrowTokens.length; i++) {
+            address _token = _data.borrowTokens[i] == ethAddr ? wethAddr : _data.borrowTokens[i];
+            _data.borrowTokens[i] = _token;
 
             (
                 ,
@@ -98,11 +103,11 @@ abstract contract Helpers is DSMath, Stores {
                 ,,,,,
             ) = aaveData.getUserReserveData(_token, sourceDsa);
 
-            stableBorrow[i] = data.stableBorrowAmts[i] == uint(-1) ? stableDebt : data.stableBorrowAmts[i];
-            variableBorrow[i] = data.variableBorrowAmts[i] == uint(-1) ? variableDebt : data.variableBorrowAmts[i];
+            stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i];
+            variableBorrow[i] = _data.variableBorrowAmts[i] == uint(-1) ? variableDebt : _data.variableBorrowAmts[i];
 
             totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
-            if (totalBorrowAmt > 0) {
+            if (totalBorrow[i] > 0) {
                 IERC20(_token).safeApprove(address(aave), totalBorrow[i]); // TODO: Approval is to Aave address of atokens address?
             }
             aave.borrow(_token, totalBorrow[i], 2, 3088, address(this)); // TODO: Borrowing debt to payback
