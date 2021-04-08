@@ -60,7 +60,6 @@ contract MigrateResolver is Helpers, Events {
         emit LogDeposit(msg.sender, tokens, _amts);
     }
 
-    // TODO: @mubaris Make this similar to L1 migrator. Have to change ETH by MATIC
     function withdraw(address[] calldata tokens, uint[] calldata amts) external {
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
@@ -129,7 +128,6 @@ contract MigrateResolver is Helpers, Events {
                 ,,,,,
             ) = aaveData.getUserReserveData(_token, address(this));
             if (supplyBal != 0 && borrowBal != 0) {
-                uint _withdrawAmt;
                 if (supplyBal > borrowBal) {
                     aave.withdraw(_token, (borrowBal + flashAmts[_token]), address(this)); // TODO: fail because of not enough withdrawing capacity?
                     IERC20(_token).approve(address(aave), borrowBal);
@@ -140,8 +138,8 @@ contract MigrateResolver is Helpers, Events {
                     aave.repay(_token, supplyBal, 2, address(this));
                 }
             }
-
         }
+        // TODO: emit event
     }
 
 }
@@ -168,11 +166,8 @@ contract AaveV2Migrator is MigrateResolver {
         borrowAndTransferSpells(aave, dsa, borrowTokens, borrowAmts);
 
         isPositionSafe();
-    }
 
-    // TODO: @mubaris - Do we need this?
-    function canMigrate(AaveData memory data) public view returns (bool can) {
-
+        // TODO: emit event
     }
 
     function onStateReceive(uint256 stateId, bytes calldata receivedData) external {
@@ -183,6 +178,7 @@ contract AaveV2Migrator is MigrateResolver {
         // Can't do it via any address as user can migrate 2 times 
         positions[stateId] = receivedData;
 
+        // TODO: add event
     }
 
     function migrate(uint _id) external {
@@ -192,10 +188,10 @@ contract AaveV2Migrator is MigrateResolver {
         
         AaveData memory data = abi.decode(_data, (AaveData));
 
-        require(canMigrate(data), "not-enough-liquidity"); // TODO: do we need this? as we can see if transaction will go through or not from our bot
-
         _migratePosition(data);
 
         delete positions[_id];
+
+        // TODO: add event
     }
 }

@@ -150,7 +150,6 @@ contract LiquidityResolver is Helpers, Events {
                 ,,,,,
             ) = aaveData.getUserReserveData(_token, address(this));
             if (supplyBal != 0 && borrowBal != 0) {
-                uint _withdrawAmt;
                 if (supplyBal > borrowBal) {
                     aave.withdraw(_token, borrowBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
                     IERC20(_token).approve(address(aave), borrowBal);
@@ -168,7 +167,7 @@ contract LiquidityResolver is Helpers, Events {
             isPositionSafe();
         }
     }
-
+    // TODO: emit event
 }
 
 contract MigrateResolver is LiquidityResolver {
