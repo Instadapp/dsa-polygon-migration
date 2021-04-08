@@ -124,15 +124,45 @@ contract LiquidityResolver is Helpers, Events {
         emit LogWithdraw(msg.sender, tokens, _amts);
     }
 
-    // TODO: @mubaris Things to factor
-    // use supportedTokens array to loop through
-    // If there is same token supply and borrow, then close the smaller one
-    // If there is ideal token then payback or deposit according to the position
-    // Object is the decrease the ratio and pay as less interest
-    // If ratio is safe then transfer excess collateral to L2 migration contract
-    // Always, keep 1000 wei WETH ideal for flashloan
-    function settle() external {
-
+    /**
+     * @param _tokens - array of tokens to transfer to L2 receiver's contract
+     * @param _amts - array of token amounts to transfer to L2 receiver's contract
+     */
+    function settle(address[] calldata _tokens, uint[] _amts) external {
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+        for (uint i = 0; i < supportedTokens.length; i++) {
+            address _token = supportedTokens[i];
+            if (_token == ethAddr) {
+                _token = wethAddr;
+                if (address(this).balance > 0) {
+                    TokenInterface(wethAddr).deposit(address(this).balance);
+                }
+            }
+            IERC20 _tokenContract = IERC20(_token);
+            uint _tokenBal = _tokenContract.balanceOf(address(this));
+            (
+                uint supplyBal,,
+                uint borrowBal,
+                ,,,,,
+            ) = aaveData.getUserReserveData(_token, address(this));
+            if (supplyBal != 0 && borrowBal != 0) {
+                uint _withdrawAmt;
+                if (supplyBal > borrowBal) {
+                    aave.withdraw(_token, borrowBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
+                    IERC20(_token).approve(address(aave), borrowBal);
+                    aave.repay(_token, borrowBal, 2, address(this));
+                } else {
+                    aave.withdraw(_token, supplyBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
+                    IERC20(_token).approve(address(aave), borrowBal);
+                    aave.repay(_token, supplyBal, 2, address(this));
+                }
+            }
+        }
+        for (uint i = 0; i < _tokens.length; i++) {
+            aave.withdraw(_tokens[i], _amts[i], address(this));
+            // TODO: transfer in polygon's receiver address "polygonReceiver"
+            isPositionSafe();
+        }
     }
 
 }
