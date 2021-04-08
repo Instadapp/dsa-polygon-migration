@@ -113,7 +113,7 @@ contract MigrateResolver is Helpers, Events {
     // Keep flashAmt tokens as ideal
     // Object is the decrease the ratio and pay as less interest
     function settle() external {
-
+        
     }
 
 }
