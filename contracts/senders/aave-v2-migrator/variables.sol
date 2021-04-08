@@ -31,7 +31,7 @@ contract Variables {
      */
     uint16 constant internal referralCode = 3228;
 
-    address constant internal polygonReceiver = address(0); // Replace this
+    address constant internal polygonReceiver = address(0); // TODO: Replace this
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
     // TODO: Is this number correct for it?

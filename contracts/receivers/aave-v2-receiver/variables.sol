@@ -3,6 +3,7 @@ pragma solidity ^0.7.0;
 import {
     TokenMappingInterface,
     AaveLendingPoolProviderInterface,
+    AaveDataProviderInterface,
     IndexInterface
 } from "./interfaces.sol";
 
@@ -20,6 +21,13 @@ contract Variables {
     TokenMappingInterface tokenMapping = TokenMappingInterface(address(2));
 
     AaveLendingPoolProviderInterface constant internal aaveProvider = AaveLendingPoolProviderInterface(0xd05e3E715d945B59290df0ae8eF85c1BdB684744);
+
+    /**
+     * @dev Aave Data Provider
+     */
+    // TODO: add L2 Data provider address
+    AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(address(0));
+
 
     // dsa => position
     mapping(uint => bytes) public positions;

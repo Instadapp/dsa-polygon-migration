@@ -128,14 +128,14 @@ contract LiquidityResolver is Helpers, Events {
      * @param _tokens - array of tokens to transfer to L2 receiver's contract
      * @param _amts - array of token amounts to transfer to L2 receiver's contract
      */
-    function settle(address[] calldata _tokens, uint[] _amts) external {
+    function settle(address[] calldata _tokens, uint[] calldata _amts) external {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         for (uint i = 0; i < supportedTokens.length; i++) {
             address _token = supportedTokens[i];
             if (_token == ethAddr) {
                 _token = wethAddr;
                 if (address(this).balance > 0) {
-                    TokenInterface(wethAddr).deposit(address(this).balance);
+                    TokenInterface(wethAddr).deposit{value: address(this).balance}();
                 }
             }
             IERC20 _tokenContract = IERC20(_token);
@@ -189,18 +189,18 @@ contract MigrateResolver is LiquidityResolver {
         (,,,,,uint healthFactor) = aave.getUserAccountData(sourceDsa);
         require(healthFactor > 1e18, "position-not-safe");
 
-        (uint[] stableBorrows, uint[] variableBorrows, uint[] totalBorrows) = _PaybackCalculate(aave, _data, sourceDsa);
+        (uint[] memory stableBorrows, uint[] memory variableBorrows, uint[] memory totalBorrows) = _PaybackCalculate(aave, _data, sourceDsa);
 
         _PaybackStable(_data.borrowTokens.length, aave, _data.borrowTokens, stableBorrows, sourceDsa);
         _PaybackVariable(_data.borrowTokens.length, aave, _data.borrowTokens, variableBorrows, sourceDsa);
 
-        (uint[] totalSupplies) = _getAtokens(sourceDsa, aave, _data.supplyTokens, _data.supplyAmts, fee);
+        (uint[] memory totalSupplies) = _getAtokens(sourceDsa, aave, _data.supplyTokens, _data.supplyAmts);
 
         // Aave on Polygon doesn't have stable borrowing so we'll borrow all the debt in variable
         AaveData memory data;
 
         data.borrowTokens = _data.borrowTokens;
-        data.stableBorrowAmts = _data.stableBorrowAmts;
+        data.borrowAmts = _data.stableBorrowAmts;
         data.supplyAmts = totalSupplies;
         data.supplyTokens = _data.supplyTokens;
         data.targetDsa = _data.targetDsa;
@@ -212,17 +212,16 @@ contract MigrateResolver is LiquidityResolver {
 
         isPositionSafe();
 
-        bytes memory positionData = data; // TODO: @everyone Can we do anything else to make the data more secure? (It's secure already)
-        stateSender.syncState(polygonReceiver, positionData);
+        stateSender.syncState(polygonReceiver, abi.encode(data));
 
         emit LogAaveV2Migrate(
             sourceDsa,
             data.targetDsa,
             data.supplyTokens,
             data.borrowTokens,
-            data.supplyAmts,
-            data.variableBorrowAmts,
-            data.stableBorrowAmts
+            totalSupplies,
+            variableBorrows,
+            stableBorrows
         );
     }
 
@@ -231,7 +230,7 @@ contract MigrateResolver is LiquidityResolver {
     }
 
     function migrateWithFlash(AaveDataRaw calldata _data, uint ethAmt) external {
-        bytes data = abi.encode(_data, msg.sender, ethAmt);
+        bytes memory data = abi.encode(_data, msg.sender, ethAmt);
         
         // TODO: @everyone integrate dydx flashloan and borrow "ethAmt" and transfer ETH to this address
         // Should we create a new contract for flashloan or interact directly from this contract? Mainly to resolve 2 WEI bug of dydx flashloan
@@ -239,21 +238,21 @@ contract MigrateResolver is LiquidityResolver {
     }
 
     // TODO: @everyone
-    function callFunction(
-        address sender,
-        Account.Info memory account,
-        bytes memory data
-    ) public override {
-        require(sender == address(this), "wrong-sender");
-        // require(msg.sender == dydxFlash, "wrong-sender"); // TODO: msg.sender should be flashloan contract
-        (address l2DSA, AaveDataRaw memory _data, address sourceDsa, uint ethAmt) = abi.decode(
-            data,
-            (address, AaveDataRaw, address, uint)
-        );
-        // TODO: deposit WETH "ethAmt" in Aave
-        _migrate(l2DSA, _data, sourceDsa);
-        // TODO: withdraw WETH "ethAmt" from Aave
-        // TODO: approve WETH "ethAmt + 2" to dydx
-    }
+    // function callFunction(
+    //     address sender,
+    //     Account.Info memory account,
+    //     bytes memory data
+    // ) public override {
+    //     require(sender == address(this), "wrong-sender");
+    //     // require(msg.sender == dydxFlash, "wrong-sender"); // TODO: msg.sender should be flashloan contract
+    //     (address l2DSA, AaveDataRaw memory _data, address sourceDsa, uint ethAmt) = abi.decode(
+    //         data,
+    //         (address, AaveDataRaw, address, uint)
+    //     );
+    //     // TODO: deposit WETH "ethAmt" in Aave
+    //     _migrate(l2DSA, _data, sourceDsa);
+    //     // TODO: withdraw WETH "ethAmt" from Aave
+    //     // TODO: approve WETH "ethAmt + 2" to dydx
+    // }
 
 }
