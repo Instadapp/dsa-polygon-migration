@@ -35,7 +35,7 @@ contract InstaImplementationM1 is Constants {
         }
     }
 
-    event LogCast(
+    event LogCastMigrate(
         address indexed origin,
         address indexed sender,
         uint256 value,
@@ -105,7 +105,7 @@ contract InstaImplementationM1 is Constants {
             (eventNames[i], eventParams[i]) = decodeEvent(response);
         }
 
-        emit LogCast(
+        emit LogCastMigrate(
             _origin,
             msg.sender,
             msg.value,
