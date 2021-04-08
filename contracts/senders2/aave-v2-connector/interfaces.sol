@@ -72,12 +72,11 @@ interface ATokenInterface {
 }
 
 interface AaveMigratorInterface {
-    function migrate(address, address, address[] calldata, address[] calldata) external;
-    function migrate(address, AaveData memory) external;
+    function migrate(AaveDataRaw memory _data) external;
+    function migrateWithFlash(AaveDataRaw memory _data, uint ethAmt) external;
 }
 
-struct AaveData {
-    bool isFinal;
+struct AaveDataRaw {
     address targetDsa;
     uint[] supplyAmts;
     uint[] variableBorrowAmts;
