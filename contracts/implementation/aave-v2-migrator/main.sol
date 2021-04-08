@@ -78,7 +78,7 @@ contract InstaImplementationM1 is Constants {
      * @param _targetNames Array of Connector address.
      * @param _datas Array of Calldata.
     */
-    function cast(
+    function castMigrate(
         string[] calldata _targetNames,
         bytes[] calldata _datas,
         address _origin
@@ -115,4 +115,5 @@ contract InstaImplementationM1 is Constants {
             eventParams
         );
     }
+
 }

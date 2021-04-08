@@ -79,6 +79,8 @@ contract MigrateResolver is Helpers, Events {
                 _amt = maxAmt;
             }
 
+            deposits[msg.sender][_token] = sub(maxAmt, _amt);
+
             if (_token == maticAddr) {
                 TokenInterface _tokenContract = TokenInterface(wmaticAddr);
                 uint _maticBal = address(this).balance;
@@ -98,8 +100,6 @@ contract MigrateResolver is Helpers, Events {
             }
 
             _amts[i] = _amt;
-
-            deposits[msg.sender][_token] = sub(maxAmt, _amt);
         }
 
         isPositionSafe();

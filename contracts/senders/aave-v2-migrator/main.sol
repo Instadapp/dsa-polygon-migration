@@ -95,6 +95,8 @@ contract LiquidityResolver is Helpers, Events {
                 _amt = maxAmt;
             }
 
+            deposits[msg.sender][_token] = sub(maxAmt, _amt);
+
             // TODO: @everyone check this throughly. Saving 1000 WEI for flashloan WETH. Also, should we make a different contract to handle 2 WEI dydx gas, I think this would be better.
             if (_token == ethAddr) {
                 TokenInterface _tokenContract = TokenInterface(wethAddr);
@@ -115,8 +117,6 @@ contract LiquidityResolver is Helpers, Events {
             }
 
             _amts[i] = _amt;
-
-            deposits[msg.sender][_token] = sub(maxAmt, _amt);
         }
 
         isPositionSafe();
