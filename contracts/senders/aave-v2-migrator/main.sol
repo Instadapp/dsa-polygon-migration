@@ -153,7 +153,7 @@ contract LiquidityResolver is Helpers, Events {
                     aave.repay(_token, borrowBal, 2, address(this));
                 } else {
                     aave.withdraw(_token, supplyBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
-                    IERC20(_token).approve(address(aave), borrowBal);
+                    IERC20(_token).approve(address(aave), supplyBal);
                     aave.repay(_token, supplyBal, 2, address(this));
                 }
             }
