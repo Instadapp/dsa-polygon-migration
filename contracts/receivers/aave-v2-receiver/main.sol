@@ -160,7 +160,7 @@ contract AaveV2Migrator is MigrateResolver {
     function migrate(uint _id) external {
         bytes memory _data = positions[_id];
 
-        require(_data != bytes(0), "already-migrated"); // TODO: How to resolve this
+        require(_data.length != 0, "already-migrated");
         
         AaveData memory data = abi.decode(_data, (AaveData));
 
