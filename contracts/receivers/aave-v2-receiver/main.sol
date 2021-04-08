@@ -107,11 +107,6 @@ contract MigrateResolver is Helpers, Events {
         emit LogWithdraw(msg.sender, tokens, _amts);
     }
 
-    // TODO: @mubaris Things to factor
-    // If there is same token supply and borrow, then close the smaller one
-    // If there is ideal token (other than flashAmt) then payback or deposit according to the position
-    // Keep flashAmt tokens as ideal
-    // Object is the decrease the ratio and pay as less interest
     function settle() external {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         for (uint i = 0; i < supportedTokens.length; i++) {
