@@ -228,6 +228,13 @@ contract MigrateResolver is LiquidityResolver {
         _migrate(_data, msg.sender);
     }
 
+    function migrateFlashCallback(AaveDataRaw calldata _data, address dsa, uint ethAmt) external {
+        require(false); // TODO: flash loan contract
+        // TODO: deposit ETH in Aave
+        _migrate(_data, dsa);
+        // TODO: withdraw ETH from Aave
+    }
+
     function migrateWithFlash(AaveDataRaw calldata _data, uint ethAmt) external {
         bytes memory data = abi.encode(_data, msg.sender, ethAmt);
         
