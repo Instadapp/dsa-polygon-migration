@@ -19,6 +19,8 @@
     "solc": "0.7.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^3.4.0-solc-0.7"
+    "@nomiclabs/hardhat-etherscan": "^2.1.1",
+    "@openzeppelin/contracts": "^3.4.0-solc-0.7",
+    "dotenv": "^8.2.0"
   }
 }
