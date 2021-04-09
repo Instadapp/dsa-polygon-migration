@@ -14,7 +14,7 @@ interface ConnectorsInterface {
 
 contract Constants is Variables {
     // InstaIndex Address.
-    address internal constant instaIndex = 0x2971AdFa57b20E5a416aE5a708A8655A9c74f723;
+    address internal constant instaIndex = 0xA9B99766E6C676Cf1975c0D3166F96C0848fF5ad;
     // Migration contract Address.
     address internal constant migrationContract = address(0); // TODO: update address on deployment
     // Connnectors Address.

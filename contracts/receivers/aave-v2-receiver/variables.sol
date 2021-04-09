@@ -34,7 +34,7 @@ contract Variables {
     mapping(address => mapping(address => uint)) public deposits;
 
     // InstaIndex Address.
-    IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
+    IndexInterface public constant instaIndex = IndexInterface(0xA9B99766E6C676Cf1975c0D3166F96C0848fF5ad);
 
     // TODO: Set by construtor?
     mapping(address => bool) public isSupportedToken;
