@@ -96,8 +96,11 @@ abstract contract Helpers is DSMath, Stores, Variables {
     }
 
     function isPositionSafe() internal returns (bool isOk) {
-        // TODO: Check the final position health
-        // @mubaris we need to add the function from Aave to check the health should be "safeRatioGap"(currently set to 20%) below liquidation
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+        (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
+        // TODO: Check throughly minLimit = 100%/80% = 125% (20% gap initially)
+        uint minLimit = wdiv(1e18, safeRatioGap);
+        isOk = healthFactor > minLimit;
         require(isOk, "position-at-risk");
     }
 

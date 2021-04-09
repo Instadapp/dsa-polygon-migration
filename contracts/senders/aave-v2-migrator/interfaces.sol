@@ -79,3 +79,7 @@ interface StateSenderInterface {
 interface IndexInterface {
     function master() external view returns (address);
 }
+
+interface FlashloanInterface {
+    function initiateFlashLoan(bytes memory data, uint ethAmt) external;
+}
