@@ -1,0 +1,149 @@
+pragma solidity ^0.7.0;
+pragma experimental ABIEncoderV2;
+
+import { DSMath } from "../../common/math.sol";
+import { Stores } from "../../common/stores-mainnet.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { Variables } from "./variables.sol";
+
+import { 
+    AaveLendingPoolProviderInterface,
+    AaveDataProviderInterface,
+    AaveInterface,
+    ATokenInterface,
+    StateSenderInterface,
+    AavePriceOracle,
+    ChainLinkInterface
+} from "./interfaces.sol";
+
+abstract contract Helpers is DSMath, Stores, Variables {
+
+    function _paybackBehalfOne(AaveInterface aave, address token, uint amt, uint rateMode, address user) private {
+        aave.repay(token, amt, rateMode, user);
+    }
+
+    function _PaybackStable(
+        uint _length,
+        AaveInterface aave,
+        address[] memory tokens,
+        uint256[] memory amts,
+        address user
+    ) internal {
+        for (uint i = 0; i < _length; i++) {
+            if (amts[i] > 0) {
+                _paybackBehalfOne(aave, tokens[i], amts[i], 1, user);
+            }
+        }
+    }
+
+    function _PaybackVariable(
+        uint _length,
+        AaveInterface aave,
+        address[] memory tokens,
+        uint256[] memory amts,
+        address user
+    ) internal {
+        for (uint i = 0; i < _length; i++) {
+            if (amts[i] > 0) {
+                _paybackBehalfOne(aave, tokens[i], amts[i], 2, user);
+            }
+        }
+    }
+
+    function _PaybackCalculate(AaveInterface aave, AaveDataRaw memory _data, address sourceDsa) internal returns (uint[] memory stableBorrow, uint[] memory variableBorrow, uint[] memory totalBorrow) {
+        for (uint i = 0; i < _data.borrowTokens.length; i++) {
+            require(isSupportedToken[_data.borrowTokens[i]], "token-not-enabled");
+            address _token = _data.borrowTokens[i] == ethAddr ? wethAddr : _data.borrowTokens[i];
+            _data.borrowTokens[i] = _token;
+
+            (
+                ,
+                uint stableDebt,
+                uint variableDebt,
+                ,,,,,
+            ) = aaveData.getUserReserveData(_token, sourceDsa);
+
+            stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i];
+            variableBorrow[i] = _data.variableBorrowAmts[i] == uint(-1) ? variableDebt : _data.variableBorrowAmts[i];
+
+            totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
+            if (totalBorrow[i] > 0) {
+                IERC20(_token).approve(address(aave), totalBorrow[i]); // TODO: Approval is to Aave address of atokens address?
+            }
+            aave.borrow(_token, totalBorrow[i], 2, 3088, address(this)); // TODO: Borrowing debt to payback
+        }
+    }
+
+    function _getAtokens(address dsa, AaveInterface aave, address[] memory supplyTokens, uint[] memory supplyAmts) internal returns (uint[] memory finalAmts) {
+        for (uint i = 0; i < supplyTokens.length; i++) {
+            require(isSupportedToken[supplyTokens[i]], "token-not-enabled");
+            (address _aToken, ,) = aaveData.getReserveTokensAddresses(supplyTokens[i]);
+            ATokenInterface aTokenContract = ATokenInterface(_aToken);
+            uint _finalAmt;
+            if (supplyAmts[i] == uint(-1)) {
+                _finalAmt = aTokenContract.balanceOf(dsa);
+            } else {
+                _finalAmt = supplyAmts[i];
+            }
+
+            aTokenContract.transferFrom(dsa, address(this), finalAmts[i]);
+
+            _finalAmt = wmul(_finalAmt, fee);
+            finalAmts[i] = _finalAmt;
+
+        }
+    }
+
+    function isPositionSafe() internal returns (bool isOk) {
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+        (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
+        // TODO: Check throughly minLimit = 100%/80% = 125% (20% gap initially)
+        uint minLimit = wdiv(1e18, safeRatioGap);
+        isOk = healthFactor > minLimit;
+        require(isOk, "position-at-risk");
+    }
+
+    function getTokensPrices(address[] memory tokens) internal view returns(uint[] memory tokenPricesInEth) {
+        tokenPricesInEth = AavePriceOracle(aaveProvider.getPriceOracle()).getAssetsPrices(tokens);
+    }
+    
+    // Liquidation threshold
+    function getTokenLt(address[] memory tokens) internal view returns (uint[] memory decimals, uint[] memory tokenLts) {
+        for (uint i = 0; i < tokens.length; i++) {
+            (decimals[i],,tokenLts[i],,,,,,,) = aaveData.getReserveConfigurationData(tokens[i]);
+        }
+    }
+
+    function convertTo18(uint amount, uint decimal) internal returns (uint) {
+        return amount * (10 ** (18 - decimal)); // TODO: verify this
+    }
+
+    // TODO: need to verify this throughly
+    /*
+     * Checks the position to migrate should have a safe gap from liquidation 
+    */
+    function _checkRatio(AaveData memory data) public {
+        uint[] memory supplyTokenPrices = getTokensPrices(data.supplyTokens);
+        (uint[] memory supplyDecimals, uint[] memory supplyLts) = getTokenLt(data.supplyTokens);
+
+        uint[] memory borrowTokenPrices = getTokensPrices(data.borrowTokens);
+        (uint[] memory borrowDecimals,) = getTokenLt(data.borrowTokens);
+        uint netSupply;
+        uint netBorrow;
+        uint liquidation;
+        for (uint i = 0; i < data.supplyTokens.length; i++) {
+            uint _amt = wmul(convertTo18(data.supplyAmts[i], supplyDecimals[i]), supplyTokenPrices[i]);
+            netSupply += _amt;
+            liquidation += (_amt * supplyLts[i]) / 10000; // convert the number 8000 to 0.8
+        }
+        for (uint i = 0; i < data.borrowTokens.length; i++) {
+            uint _amt = wmul(convertTo18(data.borrowAmts[i], borrowDecimals[i]), borrowTokenPrices[i]);
+            netBorrow += _amt;
+        }
+        uint _dif = wmul(netSupply, sub(1e18, safeRatioGap));
+        require(netBorrow < sub(liquidation, _dif), "position-is-risky-to-migrate");
+    }
+
+}
