@@ -11,7 +11,7 @@ contract Variables {
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
     // TODO: Is this number correct for it?
-    uint public safeRatioGap = 200000000000000000; // 20%? 2e17
+    uint public safeRatioGap = 800000000000000000; // 20%? 2e17
 
     // TODO: Add function for flash deposits and withdraw
     mapping(address => mapping(address => uint)) flashDeposits; // Flash deposits of particular token

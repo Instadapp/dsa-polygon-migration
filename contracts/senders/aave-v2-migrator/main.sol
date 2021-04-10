@@ -209,8 +209,7 @@ contract MigrateResolver is LiquidityResolver {
         data.borrowAmts = totalBorrows;
 
         // Checks the amount that user is trying to migrate is 20% below the Liquidation
-        bool isOk = _checkRatio(data);
-        require(isOk, "position-risky-to-migrate");
+        _checkRatio(data);
 
         if (ethAmt > 0) {
             aave.withdraw(wethAddr, ethAmt, address(this));

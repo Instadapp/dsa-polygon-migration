@@ -25,6 +25,7 @@ interface AaveInterface {
 
 interface AaveLendingPoolProviderInterface {
     function getLendingPool() external view returns (address);
+    function getPriceOracle() external view returns (address);
 }
 
 // Aave Protocol Data Provider
@@ -82,4 +83,16 @@ interface IndexInterface {
 
 interface FlashloanInterface {
     function initiateFlashLoan(bytes memory data, uint ethAmt) external;
+}
+
+interface AavePriceOracle {
+    function getAssetPrice(address _asset) external view returns(uint256);
+    function getAssetsPrices(address[] calldata _assets) external view returns(uint256[] memory);
+    function getSourceOfAsset(address _asset) external view returns(uint256);
+    function getFallbackOracle() external view returns(uint256);
+}
+
+interface ChainLinkInterface {
+    function latestAnswer() external view returns (int256);
+    function decimals() external view returns (uint256);
 }

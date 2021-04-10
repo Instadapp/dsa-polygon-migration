@@ -1,9 +1,8 @@
-pragma solidity >=0.7.0;
+pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
 import { DSMath } from "../../common/math.sol";
 import { Stores } from "../../common/stores-mainnet.sol";
-
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -14,7 +13,9 @@ import {
     AaveDataProviderInterface,
     AaveInterface,
     ATokenInterface,
-    StateSenderInterface
+    StateSenderInterface,
+    AavePriceOracle,
+    ChainLinkInterface
 } from "./interfaces.sol";
 
 abstract contract Helpers is DSMath, Stores, Variables {
@@ -104,8 +105,45 @@ abstract contract Helpers is DSMath, Stores, Variables {
         require(isOk, "position-at-risk");
     }
 
-    function _checkRatio(AaveData memory data) public returns (bool isOk) {
-        // TODO: @mubaris Check the debt/collateral ratio should be less than "safeRatioGap" from Liquidation of that particular user assets
+    function getTokensPrices(address[] memory tokens) internal view returns(uint[] memory tokenPricesInEth) {
+        tokenPricesInEth = AavePriceOracle(aaveProvider.getPriceOracle()).getAssetsPrices(tokens);
+    }
+    
+    // Liquidation threshold
+    function getTokenLt(address[] memory tokens) internal view returns (uint[] memory decimals, uint[] memory tokenLts) {
+        for (uint i = 0; i < tokens.length; i++) {
+            (decimals[i],,tokenLts[i],,,,,,,) = aaveData.getReserveConfigurationData(tokens[i]);
+        }
+    }
+
+    function convertTo18(uint amount, uint decimal) internal returns (uint) {
+        return amount * (10 ** (18 - decimal)); // TODO: verify this
+    }
+
+    // TODO: need to verify this throughly
+    /*
+     * Checks the position to migrate should have a safe gap from liquidation 
+    */
+    function _checkRatio(AaveData memory data) public {
+        uint[] memory supplyTokenPrices = getTokensPrices(data.supplyTokens);
+        (uint[] memory supplyDecimals, uint[] memory supplyLts) = getTokenLt(data.supplyTokens);
+
+        uint[] memory borrowTokenPrices = getTokensPrices(data.borrowTokens);
+        (uint[] memory borrowDecimals,) = getTokenLt(data.borrowTokens);
+        uint netSupply;
+        uint netBorrow;
+        uint liquidation;
+        for (uint i = 0; i < data.supplyTokens.length; i++) {
+            uint _amt = wmul(convertTo18(data.supplyAmts[i], supplyDecimals[i]), supplyTokenPrices[i]);
+            netSupply += _amt;
+            liquidation += (_amt * supplyLts[i]) / 10000; // convert the number 8000 to 0.8
+        }
+        for (uint i = 0; i < data.borrowTokens.length; i++) {
+            uint _amt = wmul(convertTo18(data.borrowAmts[i], borrowDecimals[i]), borrowTokenPrices[i]);
+            netBorrow += _amt;
+        }
+        uint _dif = wmul(netSupply, sub(1e18, safeRatioGap));
+        require(netBorrow < sub(liquidation, _dif), "position-is-risky-to-migrate");
     }
 
 }

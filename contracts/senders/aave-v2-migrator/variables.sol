@@ -27,6 +27,11 @@ contract Variables {
         address[] borrowTokens;
     }
 
+    struct TokenPrice {
+        uint priceInEth;
+        uint priceInUsd;
+    }
+
     /**
      * @dev Aave referal code
      */
@@ -37,7 +42,7 @@ contract Variables {
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
     // TODO: Is this number correct for it?
-    uint public safeRatioGap = 80000000000000000; // 20%?
+    uint public safeRatioGap = 800000000000000000; // 20%?
     uint public fee = 998000000000000000; // 0.2% (99.8%) on collateral? TODO: Is this right?
     // TODO: Set by construtor?
     mapping(address => bool) public isSupportedToken;
