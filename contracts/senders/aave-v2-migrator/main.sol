@@ -56,18 +56,22 @@ contract LiquidityResolver is Helpers, Events {
         for (uint256 i = 0; i < _length; i++) {
             require(isSupportedToken[tokens[i]], "token-not-enabled");
             uint _amt;
-            address _token = tokens[i];
-            if (_token == ethAddr) {
+            bool isEth = tokens[i] == ethAddr;
+            address _token = isEth ? wethAddr : tokens[i];
+
+            TokenInterface tokenContract = TokenInterface(_token);
+
+            if (isEth) {
                 require(msg.value == amts[i]);
+                tokenContract.deposit{value: msg.value}();
                 _amt = msg.value;
-                TokenInterface(wethAddr).deposit{value: msg.value}();
-                aave.deposit(wethAddr, _amt, address(this), 3288);
             } else {
-                IERC20 tokenContract = IERC20(_token);
                 _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
                 tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
-                aave.deposit(_token, _amt, address(this), 3288);
             }
+
+            tokenContract.approve(address(aave),_amt);
+            aave.deposit(_token, _amt, address(this), 3288);
 
             _amts[i] = _amt;
 
