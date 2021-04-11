@@ -3,6 +3,7 @@ pragma solidity ^0.7.0;
 import {
     AaveLendingPoolProviderInterface,
     AaveDataProviderInterface,
+    AaveOracleInterface,
     StateSenderInterface,
     IndexInterface,
     FlashloanInterface
@@ -52,6 +53,11 @@ contract Variables {
      * @dev Aave Data Provider
      */
     AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d);
+
+    /**
+     * @dev Aave Price Oracle
+     */
+    AaveOracleInterface constant internal aaveOracle = AaveOracleInterface(0xA50ba011c48153De246E5192C8f9258A2ba79Ca9);
 
     /**
      * @dev Polygon State Sync Contract

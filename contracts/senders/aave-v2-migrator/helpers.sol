@@ -14,11 +14,39 @@ import {
     AaveDataProviderInterface,
     AaveInterface,
     ATokenInterface,
-    StateSenderInterface
+    StateSenderInterface,
+    ReserveConfigurationMap
 } from "./interfaces.sol";
 
 abstract contract Helpers is DSMath, Stores, Variables {
     using SafeERC20 for IERC20;
+
+    /**
+     * @dev Aave reserve configuration bit masks
+     */
+    uint256 constant LIQUIDATION_THRESHOLD_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF;
+    uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+    uint256 constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
+    uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
+
+    /**
+     * @dev Additional math helpers
+     */
+    uint256 constant PERCENTAGE_FACTOR = 1e4; //percentage plus two decimals
+    uint256 constant HALF_PERCENT = PERCENTAGE_FACTOR / 2;
+
+    function percentMul(uint256 value, uint256 percentage) internal pure returns (uint256) {
+        if (value == 0 || percentage == 0) {
+            return 0;
+        }
+
+        require(
+            value <= (type(uint256).max - HALF_PERCENT) / percentage,
+            "percent-mul-overflow"
+        );
+
+        return (value * percentage + HALF_PERCENT) / PERCENTAGE_FACTOR;
+    }
 
     function _paybackBehalfOne(AaveInterface aave, address token, uint amt, uint rateMode, address user) private {
         address _token = token == ethAddr ? wethAddr : token;
@@ -98,17 +126,52 @@ abstract contract Helpers is DSMath, Stores, Variables {
         }
     }
 
+    function _getParams(uint config) internal returns (
+        uint liqudationThreshold, uint decimals
+    ) {
+        liqudationThreshold = (config & ~LIQUIDATION_THRESHOLD_MASK) >> LIQUIDATION_THRESHOLD_START_BIT_POSITION;
+        decimals = (config & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
+    }
+
     function isPositionSafe() internal returns (bool isOk) {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
-        // TODO: Check throughly minLimit = 100%/80% = 125% (20% gap initially)
         uint minLimit = wdiv(1e18, safeRatioGap);
         isOk = healthFactor > minLimit;
         require(isOk, "position-at-risk");
     }
 
     function _checkRatio(AaveData memory data) public returns (bool isOk) {
-        // TODO: @mubaris Check the debt/collateral ratio should be less than "safeRatioGap" from Liquidation of that particular user assets
-    }
+        uint totalCollateral;
+        uint totalDebt;
+        uint avgLiquidationThresold;
 
+        for(uint i = 0; i < data.supplyTokens.length; i++) {
+            address _token = data.supplyTokens[i] == ethAddr ? wethAddr : data.supplyTokens[i];
+            ReserveConfigurationMap memory config = aave.getConfiguration(_token);
+            (uint _liq, uint _dec) = _getParams(config.data);
+            uint assetPrice = aaveOracle.getAssetPrice(_token);
+            uint collateral = div(mul(assetPrice, data.supplyAmts[i]), 10**_dec);
+            totalCollateral += collateral;
+            avgLiquidationThresold += mul(collateral, _liq);
+        }
+
+        for(uint i = 0; data.borrowTokens.length; i++) {
+            address _token = data.supplyTokens[i] == ethAddr ? wethAddr : data.supplyTokens[i];
+            ReserveConfigurationMap memory config = aave.getConfiguration(_token);
+            (, uint _dec) = _getParams(config.data);
+            uint assetPrice = aaveOracle.getAssetPrice(_token);
+            uint debt = div(mul(assetPrice, data.borrowAmts[i]), 10**_dec);
+            totalDebt += debt;
+        }
+
+        if (totalCollateral > 0) {
+            avgLiquidationThresold = div(avgLiquidationThresold, totalCollateral);
+        }
+
+        uint healthFactor = wdiv(percentMul(totalCollateral, avgLiquidationThresold), totalDebt);
+        uint minLimit = wdiv(1e18, safeRatioGap);
+        isOk = healthFactor > minLimit;
+        require(isOk, "position-at-risk");
+    }
 }
