@@ -59,11 +59,11 @@ contract LiquidityResolver is Helpers, Events {
             bool isEth = tokens[i] == ethAddr;
             address _token = isEth ? wethAddr : tokens[i];
 
-            TokenInterface tokenContract = TokenInterface(_token);
+            IERC20 tokenContract = IERC20(_token);
 
             if (isEth) {
                 require(msg.value == amts[i]);
-                tokenContract.deposit{value: msg.value}();
+                TokenInterface(wethAddr).deposit{value: msg.value}();
                 _amt = msg.value;
             } else {
                 _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
