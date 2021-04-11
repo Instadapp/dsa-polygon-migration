@@ -70,7 +70,7 @@ contract LiquidityResolver is Helpers, Events {
                 tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
             }
 
-            tokenContract.approve(address(aave),_amt);
+            tokenContract.safeApprove(address(aave),_amt);
             aave.deposit(_token, _amt, address(this), 3288);
 
             _amts[i] = _amt;
@@ -92,7 +92,8 @@ contract LiquidityResolver is Helpers, Events {
         for (uint256 i = 0; i < _length; i++) {
             require(isSupportedToken[tokens[i]], "token-not-enabled");
             uint _amt = amts[i];
-            address _token = tokens[i];
+            bool isEth = tokens[i] == ethAddr;
+            address _token = isEth ? wethAddr : tokens[i];
             uint maxAmt = deposits[msg.sender][_token];
 
             if (_amt > maxAmt) {
@@ -101,10 +102,16 @@ contract LiquidityResolver is Helpers, Events {
 
             deposits[msg.sender][_token] = sub(maxAmt, _amt);
 
-            if (_token == ethAddr) {
+            if (isEth) {
                 TokenInterface _tokenContract = TokenInterface(wethAddr);
                 uint _ethBal = address(this).balance;
                 uint _tknBal = _tokenContract.balanceOf(address(this));
+                if (_ethBal > _amt) {
+                    msg.sender.call{value: _amt}("");
+                    _amts[i] = _amt;
+                    continue;
+                }
+
                 if ((_ethBal + _tknBal) < _amt) {
                     aave.withdraw(wethAddr, sub(_amt, (_tknBal + _ethBal)), address(this));
                 }
@@ -144,7 +151,7 @@ contract LiquidityResolver is Helpers, Events {
             IERC20 _tokenContract = IERC20(_token);
             uint _tokenBal = _tokenContract.balanceOf(address(this));
             if (_tokenBal > 0) {
-                _tokenContract.approve(address(this), _tokenBal);
+                _tokenContract.safeApprove(address(this), _tokenBal);
                 aave.deposit(_token, _tokenBal, address(this), 3288);
             }
             (
@@ -155,17 +162,17 @@ contract LiquidityResolver is Helpers, Events {
             if (supplyBal != 0 && borrowBal != 0) {
                 if (supplyBal > borrowBal) {
                     aave.withdraw(_token, borrowBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
-                    IERC20(_token).approve(address(aave), borrowBal);
+                    IERC20(_token).safeApprove(address(aave), borrowBal);
                     aave.repay(_token, borrowBal, 2, address(this));
                 } else {
                     aave.withdraw(_token, supplyBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
-                    IERC20(_token).approve(address(aave), supplyBal);
+                    IERC20(_token).safeApprove(address(aave), supplyBal);
                     aave.repay(_token, supplyBal, 2, address(this));
                 }
             }
         }
         for (uint i = 0; i < _tokens.length; i++) {
-            aave.withdraw(_tokens[i], _amts[i], address(this));
+            aave.withdraw(_token, _amts[i], address(this));
             // TODO: transfer to polygon's receiver address "polygonReceiver"
             isPositionSafe();
         }
@@ -206,7 +213,6 @@ contract MigrateResolver is LiquidityResolver {
         AaveData memory data;
 
         data.borrowTokens = _data.borrowTokens;
-        data.borrowAmts = _data.stableBorrowAmts;
         data.supplyAmts = totalSupplies;
         data.supplyTokens = _data.supplyTokens;
         data.targetDsa = _data.targetDsa;

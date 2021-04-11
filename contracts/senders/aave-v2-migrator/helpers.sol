@@ -18,9 +18,11 @@ import {
 } from "./interfaces.sol";
 
 abstract contract Helpers is DSMath, Stores, Variables {
+    using SafeERC20 for IERC20;
 
     function _paybackBehalfOne(AaveInterface aave, address token, uint amt, uint rateMode, address user) private {
-        aave.repay(token, amt, rateMode, user);
+        address _token = token == ethAddr ? wethAddr : token;
+        aave.repay(_token, amt, rateMode, user);
     }
 
     function _PaybackStable(
@@ -69,16 +71,17 @@ abstract contract Helpers is DSMath, Stores, Variables {
 
             totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
             if (totalBorrow[i] > 0) {
-                IERC20(_token).approve(address(aave), totalBorrow[i]); // TODO: Approval is to Aave address of atokens address?
+                IERC20(_token).safeApprove(address(aave), totalBorrow[i]);
             }
-            aave.borrow(_token, totalBorrow[i], 2, 3088, address(this)); // TODO: Borrowing debt to payback
+            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this));
         }
     }
 
     function _getAtokens(address dsa, AaveInterface aave, address[] memory supplyTokens, uint[] memory supplyAmts) internal returns (uint[] memory finalAmts) {
         for (uint i = 0; i < supplyTokens.length; i++) {
             require(isSupportedToken[supplyTokens[i]], "token-not-enabled");
-            (address _aToken, ,) = aaveData.getReserveTokensAddresses(supplyTokens[i]);
+            address _token = supplyTokens[i] == ethAddr ? wethAddr : supplyTokens[i];
+            (address _aToken, ,) = aaveData.getReserveTokensAddresses(_token);
             ATokenInterface aTokenContract = ATokenInterface(_aToken);
             uint _finalAmt;
             if (supplyAmts[i] == uint(-1)) {
