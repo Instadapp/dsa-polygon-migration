@@ -15,18 +15,19 @@ contract LiquidityResolver is Helpers, Events {
 
     function updateVariables(uint _safeRatioGap, uint _fee) public {
         require(msg.sender == instaIndex.master(), "not-master");
+        emit LogUpdateVariables(fee, _fee, safeRatioGap, _safeRatioGap);
         safeRatioGap = _safeRatioGap;
         fee = _fee;
-        emit variablesUpdate(safeRatioGap, fee);
     }
 
     function addTokenSupport(address[] memory _tokens) public {
         require(msg.sender == instaIndex.master(), "not-master");
         for (uint i = 0; i < _tokens.length; i++) {
+            require(!isSupportedToken[_tokens[i]], "already-added");
             isSupportedToken[_tokens[i]] = true;
+            supportedTokens.push(_tokens[i]);
         }
-        supportedTokens = _tokens;
-        // TODO: add event
+        emit LogAddSupportedTokens(_tokens);
     }
 
     function spell(address _target, bytes memory _data) external {

@@ -23,4 +23,15 @@ contract Events {
         uint[] variableBorrowAmts,
         uint[] stableBorrowAmts
     );
+
+    event LogUpdateVariables(
+        uint256 oldFee,
+        uint256 newFee,
+        uint256 oldSafeRatioGap,
+        uint256 newSafeRatioGap
+    );
+
+    event LogAddSupportedTokens(
+        uint256[] tokens
+    );
 }
