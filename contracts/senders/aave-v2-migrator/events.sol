@@ -5,13 +5,18 @@ contract Events {
     event LogDeposit(
         address owner,
         address[] tokens,
-        uint[] amts
+        uint256[] amts
     );
 
     event LogWithdraw(
         address owner,
         address[] tokens,
-        uint[] amts
+        uint256[] amts
+    );
+
+    event LogSettle(
+        address[] tokens,
+        uint256[] amts
     );
 
     event LogAaveV2Migrate(
@@ -19,9 +24,9 @@ contract Events {
         address indexed targetDsa,
         address[] supplyTokens,
         address[] borrowTokens,
-        uint[] supplyAmts,
-        uint[] variableBorrowAmts,
-        uint[] stableBorrowAmts
+        uint256[] supplyAmts,
+        uint256[] variableBorrowAmts,
+        uint256[] stableBorrowAmts
     );
 
     event LogUpdateVariables(

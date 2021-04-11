@@ -108,3 +108,7 @@ interface IndexInterface {
 interface FlashloanInterface {
     function initiateFlashLoan(bytes memory data, uint ethAmt) external;
 }
+
+interface RootChainManagerInterface {
+    function depositFor(address user, address token, bytes calldata depositData) external;
+}

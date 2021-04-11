@@ -6,7 +6,8 @@ import {
     AaveOracleInterface,
     StateSenderInterface,
     IndexInterface,
-    FlashloanInterface
+    FlashloanInterface,
+    RootChainManagerInterface
 } from "./interfaces.sol";
 
 contract Variables {
@@ -35,6 +36,7 @@ contract Variables {
 
     address constant internal polygonReceiver = address(0); // TODO: Replace this
     FlashloanInterface constant internal flashloanContract = FlashloanInterface(address(0)); // TODO: Replace this
+    address constant internal erc20Predicate = 0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf;
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
     // TODO: Is this number correct for it?
@@ -68,5 +70,10 @@ contract Variables {
 
     // InstaIndex Address.
     IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
+
+    /**
+     * Polygon deposit bridge
+     */
+    RootChainManagerInterface public constant rootChainManager = RootChainManagerInterface(0xA0c68C638235ee32657e8f720a23ceC1bFc77C77);
 
 }

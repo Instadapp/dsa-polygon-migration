@@ -173,12 +173,16 @@ contract LiquidityResolver is Helpers, Events {
             }
         }
         for (uint i = 0; i < _tokens.length; i++) {
+            address _token = _tokens[i] == ethAddr ? wethAddr : _tokens[i];
             aave.withdraw(_token, _amts[i], address(this));
-            // TODO: transfer to polygon's receiver address "polygonReceiver"
+            // TODO: Verify this
+            IERC20(_token).safeApprove(erc20Predicate, _amts[i]);
+            rootChainManager.depositFor(polygonReceiver, _token, abi.encode(_amts[i]));
+
             isPositionSafe();
         }
+        emit LogSettle(_tokens, _amts);
     }
-    // TODO: emit event
 }
 
 contract MigrateResolver is LiquidityResolver {
