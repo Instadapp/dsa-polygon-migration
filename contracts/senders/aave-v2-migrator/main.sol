@@ -26,7 +26,7 @@ contract LiquidityResolver is Helpers, Events {
             isSupportedToken[_tokens[i]] = true;
         }
         supportedTokens = _tokens;
-        // TODO: add event
+        emit LogAddTokensSupport(_tokens);
     }
 
     function spell(address _target, bytes memory _data) external {
@@ -60,12 +60,14 @@ contract LiquidityResolver is Helpers, Events {
             if (_token == ethAddr) {
                 require(msg.value == amts[i]);
                 _amt = msg.value;
-                TokenInterface(wethAddr).deposit{value: msg.value}();
+                TokenInterface(wethAddr).deposit{value: _amt}();
+                TokenInterface(wethAddr).approve(address(aave), _amt);
                 aave.deposit(wethAddr, _amt, address(this), 3288);
             } else {
                 IERC20 tokenContract = IERC20(_token);
                 _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
                 tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
+                tokenContract.approve(address(aave), _amt);
                 aave.deposit(_token, _amt, address(this), 3288);
             }
 
@@ -128,6 +130,7 @@ contract LiquidityResolver is Helpers, Events {
      * @param _amts - array of token amounts to transfer to L2 receiver's contract
      */
     function settle(address[] calldata _tokens, uint[] calldata _amts) external {
+        // TODO: Should we use dydx flashloan for easier settlement?
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         for (uint i = 0; i < supportedTokens.length; i++) {
             address _token = supportedTokens[i];

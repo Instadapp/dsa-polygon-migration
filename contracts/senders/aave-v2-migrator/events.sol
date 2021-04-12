@@ -23,4 +23,7 @@ contract Events {
         uint[] variableBorrowAmts,
         uint[] stableBorrowAmts
     );
+
+    event LogAddTokensSupport(address[] _tokens);
+
 }
