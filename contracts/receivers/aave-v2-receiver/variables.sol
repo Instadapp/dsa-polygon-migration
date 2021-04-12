@@ -10,7 +10,6 @@ import {
 contract Variables {
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
-    // TODO: Is this number correct for it?
     uint public safeRatioGap = 200000000000000000; // 20%? 2e17
 
     // TODO: Add function for flash deposits and withdraw
@@ -25,8 +24,7 @@ contract Variables {
     /**
      * @dev Aave Data Provider
      */
-    // TODO: add L2 Data provider address
-    AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(address(0));
+    AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(0x7551b5D2763519d4e37e8B81929D336De671d46d);
 
 
     // dsa => position

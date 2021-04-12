@@ -11,8 +11,6 @@ import { Events } from "./events.sol";
 contract LiquidityResolver is Helpers, Events {
     using SafeERC20 for IERC20;
 
-    event variablesUpdate(uint _safeRatioGap, uint _fee);
-
     function updateVariables(uint _safeRatioGap, uint _fee) public {
         require(msg.sender == instaIndex.master(), "not-master");
         emit LogUpdateVariables(fee, _fee, safeRatioGap, _safeRatioGap);

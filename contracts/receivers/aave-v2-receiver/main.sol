@@ -11,6 +11,22 @@ import { Helpers } from "./helpers.sol";
 contract MigrateResolver is Helpers, Events {
     using SafeERC20 for IERC20;
 
+    function updateSafeRatioGap(uint _safeRatioGap) public {
+        require(msg.sender == instaIndex.master(), "not-master");
+        emit LogUpdateSafeRatioGap(safeRatioGap, _safeRatioGap);
+        safeRatioGap = _safeRatioGap;
+    }
+
+    function addTokenSupport(address[] memory _tokens) public {
+        require(msg.sender == instaIndex.master(), "not-master");
+        for (uint i = 0; i < _tokens.length; i++) {
+            require(!isSupportedToken[_tokens[i]], "already-added");
+            isSupportedToken[_tokens[i]] = true;
+            supportedTokens.push(_tokens[i]);
+        }
+        emit LogAddSupportedTokens(_tokens);
+    }
+
     function spell(address _target, bytes memory _data) external {
         require(msg.sender == instaIndex.master(), "not-master");
         require(_target != address(0), "target-invalid");
@@ -39,18 +55,22 @@ contract MigrateResolver is Helpers, Events {
         for (uint256 i = 0; i < _length; i++) {
             require(isSupportedToken[tokens[i]], "token-not-enabled");
             uint _amt;
-            address _token = tokens[i];
-            if (_token == maticAddr) {
+            bool isMatic = tokens[i] == maticAddr;
+            address _token = isMatic ? wmaticAddr : tokens[i];
+
+            IERC20 tokenContract = IERC20(_token);
+
+            if (isMatic) {
                 require(msg.value == amts[i]);
-                _amt = msg.value;
                 TokenInterface(wmaticAddr).deposit{value: msg.value}();
-                aave.deposit(wmaticAddr, _amt, address(this), 3288);
+                _amt = msg.value;
             } else {
-                IERC20 tokenContract = IERC20(_token);
                 _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
                 tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
-                aave.deposit(_token, _amt, address(this), 3288);
             }
+
+            tokenContract.safeApprove(address(aave),_amt);
+            aave.deposit(_token, _amt, address(this), 3288);
 
             _amts[i] = _amt;
 
@@ -71,7 +91,8 @@ contract MigrateResolver is Helpers, Events {
         for (uint256 i = 0; i < _length; i++) {
             require(isSupportedToken[tokens[i]], "token-not-enabled");
             uint _amt = amts[i];
-            address _token = tokens[i];
+            bool isMatic = tokens[i] == maticAddr;
+            address _token = isMatic ? wmaticAddr : tokens[i];
             uint maxAmt = deposits[msg.sender][_token];
 
             if (_amt > maxAmt) {
@@ -80,14 +101,20 @@ contract MigrateResolver is Helpers, Events {
 
             deposits[msg.sender][_token] = sub(maxAmt, _amt);
 
-            if (_token == maticAddr) {
+            if (isMatic) {
                 TokenInterface _tokenContract = TokenInterface(wmaticAddr);
                 uint _maticBal = address(this).balance;
                 uint _tknBal = _tokenContract.balanceOf(address(this));
-                if ((_maticBal + _tknBal) < _amt) {
-                    aave.withdraw(wmaticAddr, sub(_amt, (_tknBal + _maticBal)), address(this));
+                if (_maticBal > _amt) {
+                    msg.sender.call{value: _amt}("");
+                    _amts[i] = _amt;
+                    continue;
                 }
-                _tokenContract.withdraw((sub(_amt, _maticBal)));
+
+                if ((_ethBal + _tknBal) < _amt) {
+                    aave.withdraw(wmaticAddr, sub(_amt, (_tknBal + _ethBal)), address(this));
+                }
+                _tokenContract.withdraw((sub(_amt, _ethBal)));
                 msg.sender.call{value: _amt}("");
             } else {
                 IERC20 _tokenContract = IERC20(_token);
@@ -139,7 +166,7 @@ contract MigrateResolver is Helpers, Events {
                 }
             }
         }
-        // TODO: emit event
+        emit LogSettle();
     }
 
 }
@@ -167,7 +194,7 @@ contract AaveV2Migrator is MigrateResolver {
 
         isPositionSafe();
 
-        // TODO: emit event
+        emit LogAaveV2Migrate(dsa, supplyTokens, borrowTokens, supplyAmts, supplyAmts);
     }
 
     function onStateReceive(uint256 stateId, bytes calldata receivedData) external {
@@ -178,7 +205,7 @@ contract AaveV2Migrator is MigrateResolver {
         // Can't do it via any address as user can migrate 2 times 
         positions[stateId] = receivedData;
 
-        // TODO: add event
+        emit LogStateSync(stateId, receivedData);
     }
 
     function migrate(uint _id) external {
@@ -191,7 +218,5 @@ contract AaveV2Migrator is MigrateResolver {
         _migratePosition(data);
 
         delete positions[_id];
-
-        // TODO: add event
     }
 }
