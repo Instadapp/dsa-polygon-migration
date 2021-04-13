@@ -195,13 +195,12 @@ contract MigrateResolver is LiquidityResolver {
         _PaybackStable(_data.borrowTokens.length, aave, _data.borrowTokens, stableBorrows, sourceDsa);
         _PaybackVariable(_data.borrowTokens.length, aave, _data.borrowTokens, variableBorrows, sourceDsa);
 
-        (uint[] memory totalSupplies) = _getAtokens(sourceDsa, aave, _data.supplyTokens, _data.supplyAmts);
+        (uint[] memory totalSupplies) = _getAtokens(sourceDsa, _data.supplyTokens, _data.supplyAmts);
 
         // Aave on Polygon doesn't have stable borrowing so we'll borrow all the debt in variable
         AaveData memory data;
 
         data.borrowTokens = _data.borrowTokens;
-        data.borrowAmts = _data.stableBorrowAmts;
         data.supplyAmts = totalSupplies;
         data.supplyTokens = _data.supplyTokens;
         data.targetDsa = _data.targetDsa;

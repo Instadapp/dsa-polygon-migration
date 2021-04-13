@@ -76,7 +76,7 @@ abstract contract Helpers is DSMath, Stores, Variables {
         }
     }
 
-    function _getAtokens(address dsa, AaveInterface aave, address[] memory supplyTokens, uint[] memory supplyAmts) internal returns (uint[] memory finalAmts) {
+    function _getAtokens(address dsa, address[] memory supplyTokens, uint[] memory supplyAmts) internal returns (uint[] memory finalAmts) {
         for (uint i = 0; i < supplyTokens.length; i++) {
             require(isSupportedToken[supplyTokens[i]], "token-not-enabled");
             (address _aToken, ,) = aaveData.getReserveTokensAddresses(supplyTokens[i]);
