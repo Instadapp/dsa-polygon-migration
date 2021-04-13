@@ -166,11 +166,11 @@ contract LiquidityResolver is Helpers, Events {
         }
         for (uint i = 0; i < _tokens.length; i++) {
             aave.withdraw(_tokens[i], _amts[i], address(this));
-            // TODO: transfer to polygon's receiver address "polygonReceiver"
+            migrator.depositFor(polygonReceiver, _tokens[i], abi.encode(_amts[i]));
             isPositionSafe();
         }
+        emit settle(_tokens, _amts);
     }
-    // TODO: emit event
 }
 
 contract MigrateResolver is LiquidityResolver {

@@ -28,4 +28,6 @@ contract Events {
 
     event variablesUpdate(uint _safeRatioGap, uint _fee, bool _depositEnable);
 
+    event settle(address[] tokens, uint[] amts);
+
 }

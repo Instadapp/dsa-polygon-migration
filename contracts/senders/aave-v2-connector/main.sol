@@ -9,21 +9,27 @@ import { Events } from "./events.sol";
 contract AaveMigrateResolver is Helpers, Events {
 
     function migrate(
-        AaveDataRaw calldata _data,
+        address targetDsa,
+        address[] memory supplyTokens,
+        address[] memory borrowTokens,
+        uint[] memory variableBorrowAmts,
+        uint[] memory stableBorrowAmts,
+        uint[] memory supplyAmts,
         uint ethAmt // if ethAmt is > 0 then use migrateWithflash
     ) external payable returns (string memory _eventName, bytes memory _eventParam) {
-        require(_data.supplyTokens.length > 0, "0-length-not-allowed");
-        require(_data.supplyTokens.length == _data.supplyAmts.length, "invalid-length");
-        require(_data.targetDsa != address(0), "invalid-address");
+        require(supplyTokens.length > 0, "0-length-not-allowed");
+        require(supplyTokens.length == supplyAmts.length, "invalid-length");
+        require(borrowTokens.length == variableBorrowAmts.length && borrowTokens.length  == stableBorrowAmts.length, "invalid-length");
+        require(targetDsa != address(0), "invalid-address");
 
         AaveDataRaw memory data;
 
-        data.borrowTokens = _data.borrowTokens;
-        data.stableBorrowAmts = _data.stableBorrowAmts;
-        data.supplyAmts = _data.supplyAmts;
-        data.supplyTokens = _data.supplyTokens;
-        data.targetDsa = _data.targetDsa;
-        data.variableBorrowAmts = _data.variableBorrowAmts;
+        data.targetDsa = targetDsa;
+        data.supplyTokens = supplyTokens;
+        data.borrowTokens = borrowTokens;
+        data.variableBorrowAmts = variableBorrowAmts;
+        data.stableBorrowAmts = stableBorrowAmts;
+        data.supplyAmts = supplyAmts;
 
         for (uint i = 0; i < data.supplyTokens.length; i++) {
             address _token = data.supplyTokens[i] == ethAddr ? wethAddr : data.supplyTokens[i];

@@ -5,7 +5,8 @@ import {
     AaveDataProviderInterface,
     StateSenderInterface,
     IndexInterface,
-    FlashloanInterface
+    FlashloanInterface,
+    RootChainManagerInterface
 } from "./interfaces.sol";
 
 contract Variables {
@@ -68,5 +69,7 @@ contract Variables {
 
     // InstaIndex Address.
     IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
+
+    RootChainManagerInterface internal constant migrator = RootChainManagerInterface(0xA0c68C638235ee32657e8f720a23ceC1bFc77C77);
 
 }
