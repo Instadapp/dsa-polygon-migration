@@ -44,11 +44,13 @@ contract MigrateResolver is Helpers, Events {
                 require(msg.value == amts[i]);
                 _amt = msg.value;
                 TokenInterface(wmaticAddr).deposit{value: msg.value}();
+                TokenInterface(wmaticAddr).approve(address(aave), _amt);
                 aave.deposit(wmaticAddr, _amt, address(this), 3288);
             } else {
                 IERC20 tokenContract = IERC20(_token);
                 _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
                 tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
+                tokenContract.approve(address(aave), _amt);
                 aave.deposit(_token, _amt, address(this), 3288);
             }
 
