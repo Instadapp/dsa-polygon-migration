@@ -104,18 +104,17 @@ abstract contract Helpers is Stores, DSMath, Variables {
             string[] memory targets = new string[](spellsAmt);
             bytes[] memory castData = new bytes[](spellsAmt);
             for (uint j = 0; j < num; j++) {
-                targets[j] = "AAVE-A";
                 uint k = j * 2;
                 if (i < num - 1) {
-                    // borrow spell
-                    castData[k] = abi.encode("6abcd3de", _token, splitAmt, 2, 0, 0); // TODO: verify this & is rate mode right?
-                    // deposit spell
-                    castData[k+1] = abi.encode("ce88b439", _token, splitAmt, 2, 0, 0); // TODO: verify this & is rate mode right?
+                    targets[k] = "AAVE-V1-A";
+                    castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", _token, splitAmt, 2, 0, 0);
+                    targets[k+1] = "AAVE-V1-A";
+                    castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256,uint256)", _token, splitAmt, 2, 0, 0);
                 } else {
-                    // borrow spell
-                    castData[k] = abi.encode("6abcd3de", _token, finalSplit, 2, 0, 0); // TODO: verify this & is rate mode right?
-                    // deposit spell
-                    castData[k+1] = abi.encode("ce88b439", _token, finalSplit, 2, 0, 0); // TODO: verify this & is rate mode right?
+                    targets[k] = "AAVE-V1-A";
+                    castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", _token, finalSplit, 2, 0, 0);
+                    targets[k+1] = "AAVE-V1-A";
+                    castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256,uint256)", _token, splitAmt, 2, 0, 0);
                 }
             }
 
