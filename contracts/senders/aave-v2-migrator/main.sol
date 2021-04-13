@@ -179,8 +179,7 @@ contract MigrateResolver is LiquidityResolver {
     function _migrate(
         AaveInterface aave,
         AaveDataRaw memory _data,
-        address sourceDsa,
-        uint ethAmt
+        address sourceDsa
     ) internal {
         require(_data.supplyTokens.length > 0, "0-length-not-allowed");
         require(_data.targetDsa != address(0), "invalid-address");
@@ -228,7 +227,7 @@ contract MigrateResolver is LiquidityResolver {
 
     function migrate(AaveDataRaw calldata _data) external {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
-        _migrate(aave, _data, msg.sender, 0);
+        _migrate(aave, _data, msg.sender);
     }
 
     function migrateFlashCallback(AaveDataRaw calldata _data, address dsa, uint ethAmt) external {
@@ -238,7 +237,7 @@ contract MigrateResolver is LiquidityResolver {
         TokenInterface wethContract = TokenInterface(wethAddr);
         wethContract.approve(address(aave), ethAmt);
         aave.deposit(wethAddr, ethAmt, address(this), 3288);
-        _migrate(aave, _data, dsa, ethAmt);
+        _migrate(aave, _data, dsa);
         aave.withdraw(wethAddr, ethAmt, address(this));
         wethContract.transfer(address(flashloanContract), ethAmt);
     }
