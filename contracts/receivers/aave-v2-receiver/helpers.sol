@@ -123,7 +123,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
             }
 
             targets[spellsAmt] = "BASIC-A"; // TODO: right spell?
-            castData[spellsAmt] = abi.encode("4bd3ab82", _atoken, _borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
+            castData[spellsAmt] = abi.encode("withdraw(address,uint256,address,uint256,uint256)", _atoken, _borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
             // TODO: Call DSAs cast and borrow (maybe create a new implementation which only this contract can run?)
         }
 
