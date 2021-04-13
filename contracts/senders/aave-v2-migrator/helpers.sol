@@ -70,9 +70,9 @@ abstract contract Helpers is DSMath, Stores, Variables {
 
             totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
             if (totalBorrow[i] > 0) {
-                IERC20(_token).approve(address(aave), totalBorrow[i]); // TODO: Approval is to Aave address of atokens address?
+                IERC20(_token).approve(address(aave), totalBorrow[i]);
             }
-            aave.borrow(_token, totalBorrow[i], 2, 3088, address(this)); // TODO: Borrowing debt to payback
+            aave.borrow(_token, totalBorrow[i], 2, 3088, address(this));
         }
     }
 

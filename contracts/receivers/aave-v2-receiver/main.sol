@@ -27,7 +27,6 @@ contract MigrateResolver is Helpers, Events {
         }
     }
 
-    // TODO: @mubaris Make this similar to L1 migrator. Have to change ETH by MATIC
     function deposit(address[] calldata tokens, uint[] calldata amts) external payable {
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
