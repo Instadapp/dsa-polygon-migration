@@ -11,13 +11,12 @@ import { Events } from "./events.sol";
 contract LiquidityResolver is Helpers, Events {
     using SafeERC20 for IERC20;
 
-    event variablesUpdate(uint _safeRatioGap, uint _fee);
-
-    function updateVariables(uint _safeRatioGap, uint _fee) public {
+    function updateVariables(uint _safeRatioGap, uint _fee, bool _depositEnable) public {
         require(msg.sender == instaIndex.master(), "not-master");
         safeRatioGap = _safeRatioGap;
         fee = _fee;
-        emit variablesUpdate(safeRatioGap, fee);
+        isDepositsEnabled = _depositEnable;
+        emit variablesUpdate(safeRatioGap, fee, isDepositsEnabled);
     }
 
     function addTokenSupport(address[] memory _tokens) public {
@@ -46,6 +45,7 @@ contract LiquidityResolver is Helpers, Events {
     }
 
     function deposit(address[] calldata tokens, uint[] calldata amts) external payable {
+        require(isDepositsEnabled, "deposit-not-enable");
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
 
@@ -80,6 +80,7 @@ contract LiquidityResolver is Helpers, Events {
     }
 
     function withdraw(address[] calldata tokens, uint[] calldata amts) external {
+        require(isDepositsEnabled, "withdraw-not-enable");
         uint _length = tokens.length;
         require(_length == amts.length, "invalid-length");
 
