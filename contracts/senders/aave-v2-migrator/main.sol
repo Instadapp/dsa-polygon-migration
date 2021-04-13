@@ -191,10 +191,6 @@ contract MigrateResolver is LiquidityResolver {
             "invalid-length"
         );
 
-        if (ethAmt > 0) {
-            aave.deposit(wethAddr, ethAmt, address(this), 3288);
-        }
-
         (uint[] memory stableBorrows, uint[] memory variableBorrows, uint[] memory totalBorrows) = _PaybackCalculate(aave, _data, sourceDsa);
 
         _PaybackStable(_data.borrowTokens.length, aave, _data.borrowTokens, stableBorrows, sourceDsa);
@@ -214,10 +210,6 @@ contract MigrateResolver is LiquidityResolver {
 
         // Checks the amount that user is trying to migrate is 20% below the Liquidation
         _checkRatio(data);
-
-        if (ethAmt > 0) {
-            aave.withdraw(wethAddr, ethAmt, address(this));
-        }
 
         isPositionSafe();
 
@@ -245,7 +237,9 @@ contract MigrateResolver is LiquidityResolver {
 
         TokenInterface wethContract = TokenInterface(wethAddr);
         wethContract.approve(address(aave), ethAmt);
+        aave.deposit(wethAddr, ethAmt, address(this), 3288);
         _migrate(aave, _data, dsa, ethAmt);
+        aave.withdraw(wethAddr, ethAmt, address(this));
         wethContract.transfer(address(flashloanContract), ethAmt);
     }
 
