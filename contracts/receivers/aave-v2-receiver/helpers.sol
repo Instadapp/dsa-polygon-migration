@@ -114,7 +114,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
                     targets[k] = "AAVE-V2-A";
                     castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", _token, finalSplit, 2, 0, 0);
                     targets[k+1] = "AAVE-V2-A";
-                    castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256,uint256)", _token, splitAmt, 2, 0, 0);
+                    castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256,uint256)", _token, finalSplit, 2, 0, 0);
                 }
             }
 
