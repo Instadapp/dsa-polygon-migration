@@ -100,7 +100,7 @@ abstract contract Helpers is DSMath, Stores, Variables {
         }
     }
 
-    function isPositionSafe() internal returns (bool isOk) {
+    function isPositionSafe() internal view returns (bool isOk) {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
         uint minLimit = wdiv(1e18, safeRatioGap);
@@ -127,7 +127,7 @@ abstract contract Helpers is DSMath, Stores, Variables {
     /*
      * Checks the position to migrate should have a safe gap from liquidation 
     */
-    function _checkRatio(AaveData memory data) public {
+    function _checkRatio(AaveData memory data) public view {
         uint[] memory supplyTokenPrices = getTokensPrices(data.supplyTokens);
         (uint[] memory supplyDecimals, uint[] memory supplyLts) = getTokenLt(data.supplyTokens);
 
