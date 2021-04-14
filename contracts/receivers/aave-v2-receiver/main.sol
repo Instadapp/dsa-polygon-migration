@@ -89,11 +89,11 @@ contract AaveV2Migrator is MigrateResolver {
     function _migratePosition(AaveData memory _data) internal {
         AaveData memory data = remapTokens(_data); // converting L1 token addresses to L2 addresses
 
-        address dsa = _data.targetDsa;
-        uint[] memory supplyAmts = _data.supplyAmts;
-        uint[] memory borrowAmts = _data.borrowAmts;
-        address[] memory supplyTokens = _data.supplyTokens;
-        address[] memory borrowTokens = _data.borrowTokens;
+        address dsa = data.targetDsa;
+        uint[] memory supplyAmts = data.supplyAmts;
+        uint[] memory borrowAmts = data.borrowAmts;
+        address[] memory supplyTokens = data.supplyTokens;
+        address[] memory borrowTokens = data.borrowTokens;
 
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 
