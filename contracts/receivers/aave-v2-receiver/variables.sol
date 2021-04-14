@@ -25,8 +25,7 @@ contract Variables {
     /**
      * @dev Aave Data Provider
      */
-    // TODO: add L2 Data provider address
-    AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(address(0));
+    AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(0x7551b5D2763519d4e37e8B81929D336De671d46d);
 
 
     // dsa => position

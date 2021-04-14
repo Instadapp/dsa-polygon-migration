@@ -18,7 +18,7 @@ abstract contract Stores {
     /**
     * @dev Return memory variable address
     */
-    MemoryInterface constant internal instaMemory = MemoryInterface(address(0)); // TODO: memory address on Polygon
+    MemoryInterface constant internal instaMemory = MemoryInterface(0x6C7256cf7C003dD85683339F75DdE9971f98f2FD);
 
     /**
     * @dev Get Uint value from InstaMemory Contract.

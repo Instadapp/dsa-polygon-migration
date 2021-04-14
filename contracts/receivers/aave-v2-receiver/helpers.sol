@@ -10,7 +10,8 @@ import {
     TokenMappingInterface,
     AaveData,
     AaveDataProviderInterface,
-    AaveInterface
+    AaveInterface,
+    AccountInterface
 } from "./interfaces.sol";
 
 abstract contract Helpers is Stores, DSMath, Variables {
@@ -29,21 +30,24 @@ abstract contract Helpers is Stores, DSMath, Variables {
     }
 
     function isPositionSafe() internal returns (bool isOk) {
-        // TODO: Check the final position health
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+        (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
+        uint minLimit = wdiv(1e18, safeRatioGap);
+        isOk = healthFactor > minLimit;
         require(isOk, "position-at-risk");
     }
 
     function transferAtokens(AaveInterface aave, address dsa, address[] memory supplyTokens, uint[] memory supplyAmts) internal {
         for (uint i = 0; i < supplyTokens.length; i++) {
-            address _token = supplyTokens[i];
-            IERC20 _atokenContract = IERC20(_token); // TODO: Fetch atoken from Aave mapping (change _token to atoken address)
+            address _token = supplyTokens[i] == maticAddr ? wmaticAddr : supplyTokens[i];
+            (address _aToken, ,) = aaveData.getReserveTokensAddresses(_token);
+            IERC20 _atokenContract = IERC20(_aToken);
             uint _atokenBal = _atokenContract.balanceOf(address(this));
             uint _supplyAmt = supplyAmts[i];
             bool isFlash;
             uint _flashAmt;
 
-            // get Aave liquidity of token
-            uint tokenLiq = uint(0);
+            (uint tokenLiq,,,,,,,,,) = aaveData.getReserveData(_token);
 
             if (_atokenBal < _supplyAmt) {
                 uint _reqAmt = _supplyAmt - _atokenBal;
@@ -61,11 +65,11 @@ abstract contract Helpers is Stores, DSMath, Variables {
                 uint finalSplit = _reqAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
 
                 for (uint j = 0; j < num; j++) {
-                    if (i < num - 1) {
-                        aave.borrow(_token, splitAmt, 2, 3288, address(this)); // TODO: is "2" for interest rate mode. Right?
+                    if (j < num - 1) {
+                        aave.borrow(_token, splitAmt, 2, 3288, address(this));
                         aave.deposit(_token, splitAmt, address(this), 3288);
                     } else {
-                        aave.borrow(_token, finalSplit, 2, 3288, address(this)); // TODO: is "2" for interest rate mode. Right?
+                        aave.borrow(_token, finalSplit, 2, 3288, address(this));
                         aave.deposit(_token, finalSplit, address(this), 3288);
                     }
                 }
@@ -81,10 +85,9 @@ abstract contract Helpers is Stores, DSMath, Variables {
 
     function borrowAndTransferSpells(AaveInterface aave, address dsa, address[] memory borrowTokens, uint[] memory borrowAmts) internal {
         for (uint i = 0; i < borrowTokens.length; i++) {
-            address _token = borrowTokens[i];
-            address _atoken = address(0); // TODO: Fetch atoken address
-            // get Aave liquidity of token
-            uint tokenLiq = uint(0);
+            address _token = borrowTokens[i] == maticAddr ? wmaticAddr : borrowTokens[i];
+            (address _atoken, ,) = aaveData.getReserveTokensAddresses(_token);
+            (uint tokenLiq,,,,,,,,,) = aaveData.getReserveData(_token);
             uint _borrowAmt = borrowAmts[i];
 
             uint _flashAmt;
@@ -124,7 +127,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
 
             targets[spellsAmt] = "BASIC-A"; // TODO: right spell?
             castData[spellsAmt] = abi.encode("withdraw(address,uint256,address,uint256,uint256)", _atoken, _borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
-            // TODO: Call DSAs cast and borrow (maybe create a new implementation which only this contract can run?)
+            AccountInterface(dsa).castMigrate(targets, castData, address(this));
         }
 
     }

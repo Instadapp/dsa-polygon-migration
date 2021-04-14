@@ -3,6 +3,7 @@ pragma solidity ^0.7.0;
 import {
     AaveLendingPoolProviderInterface,
     AaveDataProviderInterface,
+    AaveOracleInterface,
     StateSenderInterface,
     IndexInterface,
     FlashloanInterface,
@@ -40,6 +41,7 @@ contract Variables {
 
     address constant internal polygonReceiver = address(0); // TODO: Replace this
     FlashloanInterface constant internal flashloanContract = FlashloanInterface(address(0)); // TODO: Replace this
+    address constant internal erc20Predicate = 0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf;
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
     // TODO: Is this number correct for it?
@@ -60,6 +62,11 @@ contract Variables {
     AaveDataProviderInterface constant internal aaveData = AaveDataProviderInterface(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d);
 
     /**
+     * @dev Aave Price Oracle
+     */
+    AaveOracleInterface constant internal aaveOracle = AaveOracleInterface(0xA50ba011c48153De246E5192C8f9258A2ba79Ca9);
+
+    /**
      * @dev Polygon State Sync Contract
      */
     StateSenderInterface constant internal stateSender = StateSenderInterface(0x28e4F3a7f651294B9564800b2D01f35189A5bFbE);
@@ -70,6 +77,9 @@ contract Variables {
     // InstaIndex Address.
     IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
 
-    RootChainManagerInterface internal constant migrator = RootChainManagerInterface(0xA0c68C638235ee32657e8f720a23ceC1bFc77C77);
+    /**
+     * Polygon deposit bridge
+     */
+    RootChainManagerInterface public constant rootChainManager = RootChainManagerInterface(0xA0c68C638235ee32657e8f720a23ceC1bFc77C77);
 
 }
