@@ -11,12 +11,11 @@ import { Events } from "./events.sol";
 contract LiquidityResolver is Helpers, Events {
     using SafeERC20 for IERC20;
 
-    function updateVariables(uint _safeRatioGap, uint _fee, bool _depositEnable) public {
+    function updateVariables(uint _safeRatioGap, uint _fee) public {
         require(msg.sender == instaIndex.master(), "not-master");
         safeRatioGap = _safeRatioGap;
         fee = _fee;
-        isDepositsEnabled = _depositEnable;
-        emit variablesUpdate(safeRatioGap, fee, isDepositsEnabled);
+        emit LogVariablesUpdate(safeRatioGap, fee);
     }
 
     function addTokenSupport(address[] memory _tokens) public {
@@ -43,97 +42,6 @@ contract LiquidityResolver is Helpers, Events {
                     revert(0x00, size)
                 }
         }
-    }
-
-    function deposit(address[] calldata tokens, uint[] calldata amts) external payable {
-        require(isDepositsEnabled, "deposit-not-enable");
-        uint _length = tokens.length;
-        require(_length == amts.length, "invalid-length");
-
-        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
-
-        uint[] memory _amts = new uint[](_length);
-
-        for (uint256 i = 0; i < _length; i++) {
-            require(isSupportedToken[tokens[i]], "token-not-enabled");
-            uint _amt;
-            bool isEth = tokens[i] == ethAddr;
-            address _token = isEth ? wethAddr : tokens[i];
-
-            IERC20 tokenContract = IERC20(_token);
-
-            if (isEth) {
-                require(msg.value == amts[i]);
-                TokenInterface(wethAddr).deposit{value: msg.value}();
-                _amt = msg.value;
-            } else {
-                _amt = amts[i] == uint(-1) ? tokenContract.balanceOf(msg.sender) : amts[i];
-                tokenContract.safeTransferFrom(msg.sender, address(this), _amt);
-            }
-
-            tokenContract.safeApprove(address(aave),_amt);
-            aave.deposit(_token, _amt, address(this), 3288);
-
-            _amts[i] = _amt;
-
-            deposits[msg.sender][_token] += _amt;
-        }
-
-        emit LogDeposit(msg.sender, tokens, _amts);
-    }
-
-    function withdraw(address[] calldata tokens, uint[] calldata amts) external {
-        require(isDepositsEnabled, "withdraw-not-enable");
-        uint _length = tokens.length;
-        require(_length == amts.length, "invalid-length");
-
-        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
-
-        uint[] memory _amts = new uint[](_length);
-
-        for (uint256 i = 0; i < _length; i++) {
-            require(isSupportedToken[tokens[i]], "token-not-enabled");
-            uint _amt = amts[i];
-            bool isEth = tokens[i] == ethAddr;
-            address _token = isEth ? wethAddr : tokens[i];
-            uint maxAmt = deposits[msg.sender][_token];
-
-            if (_amt > maxAmt) {
-                _amt = maxAmt;
-            }
-
-            deposits[msg.sender][_token] = sub(maxAmt, _amt);
-
-            if (isEth) {
-                TokenInterface _tokenContract = TokenInterface(wethAddr);
-                uint _ethBal = address(this).balance;
-                uint _tknBal = _tokenContract.balanceOf(address(this));
-                if (_ethBal > _amt) {
-                    msg.sender.call{value: _amt}("");
-                    _amts[i] = _amt;
-                    continue;
-                }
-
-                if ((_ethBal + _tknBal) < _amt) {
-                    aave.withdraw(wethAddr, sub(_amt, (_tknBal + _ethBal)), address(this));
-                }
-                _tokenContract.withdraw((sub(_amt, _ethBal)));
-                msg.sender.call{value: _amt}("");
-            } else {
-                IERC20 _tokenContract = IERC20(_token);
-                uint _tknBal = _tokenContract.balanceOf(address(this));
-                if (_tknBal < _amt) {
-                    aave.withdraw(_token, sub(_amt, _tknBal), address(this));
-                }
-                _tokenContract.safeTransfer(msg.sender, _amt);
-            }
-
-            _amts[i] = _amt;
-        }
-
-        isPositionSafe();
-
-        emit LogWithdraw(msg.sender, tokens, _amts);
     }
 
     /**

@@ -37,13 +37,9 @@ contract Events {
     );
 
     event LogAddSupportedTokens(
-        uint256[] tokens
+        address[] tokens
     );
 
-    event LogAddTokensSupport(address[] _tokens);
-
-    event variablesUpdate(uint _safeRatioGap, uint _fee, bool _depositEnable);
-
-    event settle(address[] tokens, uint[] amts);
+    event LogVariablesUpdate(uint _safeRatioGap, uint _fee);
 
 }

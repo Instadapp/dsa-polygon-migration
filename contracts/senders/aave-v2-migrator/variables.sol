@@ -71,8 +71,6 @@ contract Variables {
      */
     StateSenderInterface constant internal stateSender = StateSenderInterface(0x28e4F3a7f651294B9564800b2D01f35189A5bFbE);
 
-    mapping(address => mapping(address => uint)) public deposits;
-    bool public isDepositsEnabled;
 
     // InstaIndex Address.
     IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);

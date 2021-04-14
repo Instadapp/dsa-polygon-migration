@@ -30,7 +30,6 @@ contract Variables {
 
     // dsa => position
     mapping(uint => bytes) public positions;
-    mapping(address => mapping(address => uint)) public deposits;
 
     // InstaIndex Address.
     IndexInterface public constant instaIndex = IndexInterface(0xA9B99766E6C676Cf1975c0D3166F96C0848fF5ad);
