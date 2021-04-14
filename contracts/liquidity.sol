@@ -3,6 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import { DSMath } from "./common/math.sol";
 
 interface Account {
@@ -280,14 +281,14 @@ contract DydxFlashloaner is Setup, ICallee, DydxFlashloanBase, DSMath {
         require(sender == address(this), "not-same-sender");
         require(msg.sender == soloAddr, "not-solo-dydx-sender");
 
-        (AaveDataRaw memory _data, address dsa, uint ethAmt) = abi.decode(
+        (bytes memory callData, uint ethAmt) = abi.decode(
             data,
-            (AaveDataRaw, address, uint)
+            (bytes, uint)
         );
 
         wethContract.transfer(address(migrationAddr), ethAmt);
 
-        migrationAddr.migrateFlashCallback(_data, dsa, ethAmt);
+        Address.functionCall(address(migrationAddr), callData);
     }
 
     function initiateFlashLoan(bytes memory data, uint ethAmt) external {
