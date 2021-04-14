@@ -28,9 +28,6 @@ module.exports = {
         blockNumber: 12068005,
       },
       blockGasLimit: 12000000,
-
-      masterAddress: INSTA_MASTER,
-      instaIndexAddress: INSTA_INDEX
     },
     kovan: {
       url: `https://eth-kovan.alchemyapi.io/v2/${ALCHEMY_ID}`,
