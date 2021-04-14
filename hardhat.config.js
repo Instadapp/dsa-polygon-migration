@@ -1,22 +1,76 @@
+// Buidler
+require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-web3")
+require("hardhat-deploy");
+require("hardhat-deploy-ethers");
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async () => {
-  const accounts = await ethers.getSigners();
+require("@nomiclabs/hardhat-etherscan");
 
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
+require("dotenv").config();
 
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
+const { utils } = require("ethers");
 
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
+const ALCHEMY_ID = process.env.ALCHEMY_ID;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+// ================================= CONFIG =========================================
 module.exports = {
-  solidity: "0.7.3",
+  defaultNetwork: "hardhat",
+  tenderly: {
+    project: "team-development",
+    username: "InstaDApp",
+    forkNetwork: "1"
+  },
+  networks: {
+    hardhat: {
+      forking: {
+        url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID}`,
+        blockNumber: 12068005,
+      },
+      blockGasLimit: 12000000,
+
+      masterAddress: INSTA_MASTER,
+      instaIndexAddress: INSTA_INDEX
+    },
+    kovan: {
+      url: `https://eth-kovan.alchemyapi.io/v2/${ALCHEMY_ID}`,
+      accounts: [`0x${PRIVATE_KEY}`]
+    },
+    mainnet: {
+      url: `https://eth.alchemyapi.io/v2/${ALCHEMY_ID}`,
+      accounts: [`0x${PRIVATE_KEY}`],
+      timeout: 150000,
+      gasPrice: parseInt(utils.parseUnits("93", "gwei"))
+    },
+    matic: {
+      url: "https://rpc-mainnet.maticvigil.com/",
+      accounts: [`0x${PRIVATE_KEY}`],
+      timeout: 150000,
+      gasPrice: parseInt(utils.parseUnits("1", "gwei"))
+    }
+  },
+  solidity: {
+    compilers: [
+      {
+        version: "0.7.6"
+      },
+      {
+        version: "0.7.3",
+      },
+      {
+        version: "0.7.0",
+      },
+      {
+        version: "0.6.10",
+      },
+      {
+        version: "0.6.8",
+      }
+    ]
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN
+  }
+
 };
 
