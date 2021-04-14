@@ -112,6 +112,26 @@ contract MigrateResolver is LiquidityResolver {
             "invalid-length"
         );
 
+        for (uint i = 0; i < _data.supplyTokens.length; i++) {
+            address _token = _data.supplyTokens[i];
+            for (uint j = 0; j < _data.supplyTokens.length; j++) {
+                if (j != i) {
+                    require(j != i, "token-repeated");
+                }
+            }
+            require(_token != wethAddr, "should-be-eth-address");
+        }
+
+        for (uint i = 0; i < _data.borrowTokens.length; i++) {
+            address _token = _data.borrowTokens[i];
+            for (uint j = 0; j < _data.borrowTokens.length; j++) {
+                if (j != i) {
+                    require(j != i, "token-repeated");
+                }
+            }
+            require(_token != wethAddr, "should-be-eth-address");
+        }
+
         (uint[] memory stableBorrows, uint[] memory variableBorrows, uint[] memory totalBorrows) = _PaybackCalculate(aave, _data, sourceDsa);
 
         _PaybackStable(_data.borrowTokens.length, aave, _data.borrowTokens, stableBorrows, sourceDsa);
