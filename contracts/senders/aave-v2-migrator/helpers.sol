@@ -25,16 +25,16 @@ abstract contract Helpers is DSMath, Stores, Variables {
     /**
      * @dev Aave reserve configuration bit masks
      */
-    uint256 constant LIQUIDATION_THRESHOLD_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF;
-    uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
-    uint256 constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
-    uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
+    // uint256 constant LIQUIDATION_THRESHOLD_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF;
+    // uint256 constant DECIMALS_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+    // uint256 constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
+    // uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
 
-    /**
-     * @dev Additional math helpers
-     */
-    uint256 constant PERCENTAGE_FACTOR = 1e4; //percentage plus two decimals
-    uint256 constant HALF_PERCENT = PERCENTAGE_FACTOR / 2;
+    // /**
+    //  * @dev Additional math helpers
+    //  */
+    // uint256 constant PERCENTAGE_FACTOR = 1e4; //percentage plus two decimals
+    // uint256 constant HALF_PERCENT = PERCENTAGE_FACTOR / 2;
 
     // function percentMul(uint256 value, uint256 percentage) internal pure returns (uint256) {
     //     if (value == 0 || percentage == 0) {
