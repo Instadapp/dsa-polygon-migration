@@ -164,7 +164,8 @@ contract MigrateResolver is LiquidityResolver {
     }
 
     function migrateWithFlash(AaveDataRaw calldata _data, uint ethAmt) external {
-        bytes memory data = abi.encode(_data, msg.sender, ethAmt);
+        bytes memory callbackData = abi.encodeWithSelector(bytes4(this.migrateFlashCallback.selector), _data, msg.sender, ethAmt);
+        bytes memory data = abi.encode(callbackData, ethAmt);
 
         flashloanContract.initiateFlashLoan(data, ethAmt);
     }
