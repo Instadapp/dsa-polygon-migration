@@ -135,8 +135,8 @@ abstract contract Helpers is Stores, DSMath, Variables {
                 }
             }
 
-            targets[spellsAmt] = "BASIC-A"; // TODO: right spell?
-            castData[spellsAmt] = abi.encodeWithSignature("withdraw(address,uint256,address,uint256,uint256)", data.atoken, data.borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
+            targets[spellsAmt - 1] = "BASIC-A"; // TODO: right spell?
+            castData[spellsAmt - 1] = abi.encodeWithSignature("withdraw(address,uint256,address,uint256,uint256)", data.atoken, data.borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
             AccountInterface(dsa).castMigrate(targets, castData, address(this));
         }
 
