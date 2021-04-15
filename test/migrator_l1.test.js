@@ -121,15 +121,19 @@ describe("Migrator", function() {
   })
 
   it("test migrate", async function() {
-    const sourceAddr = '0x42c7788dd1cef71cf04ae4d6bca37d129c27e001'
 
+    const sourceAddr = '0x05A14F14E7a435542468D6F4d408D6F67303D769'
+    await master.sendTransaction({
+      to: sourceAddr,
+      value: ethers.utils.parseEther("1")
+    });
     const rawData = {
-      targetDsa: sourceAddr,
+      targetDsa: "0x150Acc42e6751776c9E784EfF830cB4f35aE98f3",
       supplyTokens: [weth],
-      borrowTokens: [usdc],
+      borrowTokens: [usdt],
       supplyAmts: [ethers.utils.parseEther('60')],
       variableBorrowAmts: [ethers.utils.parseUnits('10000', 6)],
-      stableBorrowAmts: [ethers.utils.parseUnits('10000', 6)]
+      stableBorrowAmts: [0]
     }
 
     await hre.network.provider.request({
