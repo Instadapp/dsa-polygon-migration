@@ -18,7 +18,7 @@ contract Variables {
     mapping(address => uint) flashAmts; // token amount for flashloan usage (these token will always stay raw in this contract)
 
     // TODO: Replace this
-    TokenMappingInterface tokenMapping = TokenMappingInterface(address(2));
+    TokenMappingInterface tokenMapping = TokenMappingInterface(address(0xa31442F2607947a88807b2bcD5D4951eEdd4A885)); // TODO: FAKE ADDR, CHANGE THIS
 
     AaveLendingPoolProviderInterface constant internal aaveProvider = AaveLendingPoolProviderInterface(0xd05e3E715d945B59290df0ae8eF85c1BdB684744);
 
