@@ -106,8 +106,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
             uint splitAmt = data.borrowAmt/num; // TODO: Check decimal
             uint finalSplit = data.borrowAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
 
-            // uint spellsAmt = num <= 1 ? (2 * num) + 1 : (2 * num) + 2;
-            uint spellsAmt = (2 * num) + 2;
+            uint spellsAmt = num <= 1 ? (2 * (num + 1)) : (2 * (num + 1)) + 1;
             string[] memory targets = new string[](spellsAmt);
             bytes[] memory castData = new bytes[](spellsAmt);
 
@@ -115,15 +114,19 @@ abstract contract Helpers is Stores, DSMath, Variables {
             castData[0] = abi.encodeWithSignature("enableCollateral(address[])", supplyTokens);
                     
             for (uint j = 0; j < num; j++) {
-                uint k = j * 2 + 1;
-                // uint skip = 0;
+                uint skip = 0;
+                uint k = j * 2 + 1 + skip;
+                
                 if (i < num - 1) {
                     targets[k] = "AAVE-V2-A";
                     castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, splitAmt, 2, 0, 0);
                     targets[k+1] = "AAVE-V2-A";
                     castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256)", data.token, splitAmt, 0, 0);
-                    // targets[k+1] = "AAVE-V2-A"; // TODO : enableCollateral
-                    // castData[k+1] = abi.encodeWithSignature("enableCollateral(address[])", data.token, splitAmt, 0, 0);
+                    if (j == 0) {
+                        skip = 1;
+                        targets[k+1] = "AAVE-V2-A"; 
+                        castData[k+1] = abi.encodeWithSignature("enableCollateral(address[])", data.token, splitAmt, 0, 0);
+                    }
                 } else {
                     targets[k] = "AAVE-V2-A";
                     castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, finalSplit, 2, 0, 0);
