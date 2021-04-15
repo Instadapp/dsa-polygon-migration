@@ -304,6 +304,8 @@ contract DydxFlashloaner is Setup, ICallee, DydxFlashloanBase, DSMath {
         Account.Info[] memory accountInfos = new Account.Info[](1);
         accountInfos[0] = _getAccountInfo();
 
+        wethContract.approve(soloAddr, ethAmt + 2);
+        
         solo.operate(accountInfos, operations);
     }
 }

@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 interface TokenInterface {
     function approve(address, uint256) external;
-    function transfer(address, uint) external;
+    function transfer(address, uint) external returns (bool);
     function transferFrom(address, address, uint) external;
     function deposit() external payable;
     function withdraw(uint) external;

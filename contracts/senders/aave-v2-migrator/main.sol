@@ -187,8 +187,8 @@ contract MigrateResolver is LiquidityResolver {
         _migrate(aave, _data, dsa);
         console.log("here3");
         aave.withdraw(wethAddr, ethAmt, address(this));
-        console.log("here4");
-        wethContract.transfer(address(flashloanContract), ethAmt);
+        console.log("here4", ethAmt);
+        require(wethContract.transfer(address(flashloanContract), ethAmt), "migrateFlashCallback: weth transfer failed to Instapool");
         console.log("here5");
     }
 
