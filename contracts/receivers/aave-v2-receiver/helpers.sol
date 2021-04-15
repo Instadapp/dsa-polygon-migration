@@ -23,9 +23,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
         address atoken;
         uint atokenBal;
         uint supplyAmt;
-        uint flashAmt;
         uint tokenLiq;
-        bool isFlash;
     }
 
     struct SpellHelperData {
@@ -33,8 +31,6 @@ abstract contract Helpers is Stores, DSMath, Variables {
         address atoken;
         uint tokenLiq;
         uint borrowAmt;
-        uint flashAmt;
-        bool isFlash;
     }
 
     function remapTokens(AaveData memory data) internal view returns (AaveData memory) {
@@ -71,16 +67,6 @@ abstract contract Helpers is Stores, DSMath, Variables {
 
             if (data.atokenBal < data.supplyAmt) {
                 uint _reqAmt = data.supplyAmt - data.atokenBal;
-                if (data.tokenLiq < _reqAmt) {
-                    data.flashAmt = flashAmts[data.token];
-                    if (data.flashAmt > 0) {
-                        _tokenContract.approve(address(aave), data.flashAmt);
-                        aave.deposit(data.token, data.flashAmt, address(this), 3288); // TODO: what is our ID on Polygon?
-                        data.tokenLiq += data.flashAmt;
-                        data.isFlash = true;
-                    }
-                }
-
                 uint num = _reqAmt/data.tokenLiq + 1; // TODO: Is this right
                 uint splitAmt = _reqAmt/num; // TODO: Check decimal
                 uint finalSplit = _reqAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
@@ -97,10 +83,6 @@ abstract contract Helpers is Stores, DSMath, Variables {
                 }
             }
 
-            if (data.isFlash) {
-                aave.withdraw(data.token, data.flashAmt, address(this));
-            }
-
             _atokenContract.safeTransfer(dsa, data.supplyAmt);
         }
     }
@@ -113,12 +95,6 @@ abstract contract Helpers is Stores, DSMath, Variables {
             (data.tokenLiq,,,,,,,,,) = aaveData.getReserveData(data.token);
             data.borrowAmt = borrowAmts[i];
 
-            if (data.tokenLiq < data.borrowAmt) {
-                data.flashAmt = flashAmts[data.token];
-                aave.deposit(data.token, data.flashAmt, address(this), 3288); // TODO: what is our ID on Polygon?
-                data.isFlash = true;
-                data.tokenLiq += data.flashAmt;
-            }
             // TODO: Check number of loops needed. Borrow and supply on user's account.
             uint num = data.borrowAmt/data.tokenLiq + 1; // TODO: Is this right
             uint splitAmt = data.borrowAmt/num; // TODO: Check decimal
@@ -140,10 +116,6 @@ abstract contract Helpers is Stores, DSMath, Variables {
                     targets[k+1] = "AAVE-V2-A";
                     castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256)", data.token, finalSplit, 0, 0);
                 }
-            }
-
-            if (data.isFlash) {
-                aave.withdraw(data.token, data.flashAmt, address(this));
             }
 
             targets[spellsAmt] = "BASIC-A"; // TODO: right spell?

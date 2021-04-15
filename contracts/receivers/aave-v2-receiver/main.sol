@@ -70,11 +70,11 @@ contract MigrateResolver is Helpers, Events {
             ) = aaveData.getUserReserveData(_token, address(this));
             if (supplyBal != 0 && borrowBal != 0) {
                 if (supplyBal > borrowBal) {
-                    aave.withdraw(_token, (borrowBal + flashAmts[_token]), address(this)); // TODO: fail because of not enough withdrawing capacity?
+                    aave.withdraw(_token, borrowBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
                     IERC20(_token).approve(address(aave), borrowBal);
                     aave.repay(_token, borrowBal, 2, address(this));
                 } else {
-                    aave.withdraw(_token, (supplyBal + flashAmts[_token]), address(this)); // TODO: fail because of not enough withdrawing capacity?
+                    aave.withdraw(_token, supplyBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
                     IERC20(_token).approve(address(aave), supplyBal);
                     aave.repay(_token, supplyBal, 2, address(this));
                 }
