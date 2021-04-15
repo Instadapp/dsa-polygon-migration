@@ -189,6 +189,7 @@ contract MigrateResolver is LiquidityResolver {
         aave.withdraw(wethAddr, ethAmt, address(this));
         console.log("here4");
         wethContract.transfer(address(flashloanContract), ethAmt);
+        console.log("here5");
     }
 
     function migrateWithFlash(AaveDataRaw calldata _data, uint ethAmt) external {
