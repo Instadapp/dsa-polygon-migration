@@ -19,6 +19,10 @@ contract MigrateResolver is Helpers, Events {
 
     function addTokenSupport(address[] memory _tokens) public {
         require(msg.sender == instaIndex.master(), "not-master");
+        for (uint i = 0; i < supportedTokens.length; i++) {
+            delete isSupportedToken[supportedTokens[i]];
+        }
+        delete supportedTokens;
         for (uint i = 0; i < _tokens.length; i++) {
             require(!isSupportedToken[_tokens[i]], "already-added");
             isSupportedToken[_tokens[i]] = true;
@@ -66,11 +70,11 @@ contract MigrateResolver is Helpers, Events {
             ) = aaveData.getUserReserveData(_token, address(this));
             if (supplyBal != 0 && borrowBal != 0) {
                 if (supplyBal > borrowBal) {
-                    aave.withdraw(_token, (borrowBal + flashAmts[_token]), address(this)); // TODO: fail because of not enough withdrawing capacity?
+                    aave.withdraw(_token, borrowBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
                     IERC20(_token).approve(address(aave), borrowBal);
                     aave.repay(_token, borrowBal, 2, address(this));
                 } else {
-                    aave.withdraw(_token, (supplyBal + flashAmts[_token]), address(this)); // TODO: fail because of not enough withdrawing capacity?
+                    aave.withdraw(_token, supplyBal, address(this)); // TODO: fail because of not enough withdrawing capacity?
                     IERC20(_token).approve(address(aave), supplyBal);
                     aave.repay(_token, supplyBal, 2, address(this));
                 }
@@ -108,6 +112,8 @@ contract AaveV2Migrator is MigrateResolver {
     }
 
     function onStateReceive(uint256 stateId, bytes calldata receivedData) external {
+        // Add some more require statements. Any kind of hashing for better privacy?
+        require(msg.sender == maticReceiver, "not-receiver-address");
         require(stateId > lastStateId, "wrong-data");
         lastStateId = stateId;
 

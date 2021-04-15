@@ -13,10 +13,6 @@ contract Variables {
     // TODO: Is this number correct for it?
     uint public safeRatioGap = 800000000000000000; // 20%? 2e17
 
-    // TODO: Add function for flash deposits and withdraw
-    mapping(address => mapping(address => uint)) flashDeposits; // Flash deposits of particular token
-    mapping(address => uint) flashAmts; // token amount for flashloan usage (these token will always stay raw in this contract)
-
     // TODO: Replace this
     TokenMappingInterface tokenMapping = TokenMappingInterface(address(0xa31442F2607947a88807b2bcD5D4951eEdd4A885)); // TODO: FAKE ADDR, CHANGE THIS
 
@@ -36,6 +32,9 @@ contract Variables {
 
     // TODO: Set by construtor?
     mapping(address => bool) public isSupportedToken;
-    address[] public supportedTokens;
+    address[] public supportedTokens; // don't add maticAddr. Only add wmaticAddr?
+
+    // Address which will receive L1 data and post it on L2
+    address public maticReceiver = address(0); // TODO: Change address
 
 }
