@@ -119,7 +119,7 @@ contract MigrateResolver is LiquidityResolver {
                     require(j != i, "token-repeated");
                 }
             }
-            require(_token != wethAddr, "should-be-eth-address");
+            require(_token != ethAddr, "should-be-eth-address");
         }
 
         for (uint i = 0; i < _data.borrowTokens.length; i++) {
@@ -129,7 +129,7 @@ contract MigrateResolver is LiquidityResolver {
                     require(j != i, "token-repeated");
                 }
             }
-            require(_token != wethAddr, "should-be-eth-address");
+            require(_token != ethAddr, "should-be-eth-address");
         }
 
         (uint[] memory stableBorrows, uint[] memory variableBorrows, uint[] memory totalBorrows) = _PaybackCalculate(aave, _data, sourceDsa);
