@@ -36,6 +36,9 @@ contract Variables {
 
     // TODO: Set by construtor?
     mapping(address => bool) public isSupportedToken;
-    address[] public supportedTokens; // don't add ethAddr. Only add wethAddr
+    address[] public supportedTokens; // don't add maticAddr. Only add wmaticAddr?
+
+    // Address which will receive L1 data and post it on L2
+    address public maticReceiver = address(0); // TODO: Change address
 
 }
