@@ -104,7 +104,14 @@ abstract contract Helpers is DSMath, Stores, Variables {
         }
     }
 
-    function _getAtokens(address dsa, address[] memory supplyTokens, uint[] memory supplyAmts) internal returns (uint[] memory finalAmts) {
+    function _getAtokens(
+        address dsa,
+        address[] memory supplyTokens,
+        uint[] memory supplyAmts
+    ) internal returns (
+        uint[] memory finalAmts
+    ) {
+        finalAmts = new uint256[](supplyTokens.length);
         for (uint i = 0; i < supplyTokens.length; i++) {
             require(isSupportedToken[supplyTokens[i]], "token-not-enabled");
             address _token = supplyTokens[i] == ethAddr ? wethAddr : supplyTokens[i];
@@ -139,7 +146,10 @@ abstract contract Helpers is DSMath, Stores, Variables {
     
     // Liquidation threshold
     function getTokenLt(address[] memory tokens) internal view returns (uint[] memory decimals, uint[] memory tokenLts) {
-        for (uint i = 0; i < tokens.length; i++) {
+        uint _len = tokens.length;
+        decimals = new uint[](_len);
+        tokenLts = new uint[](_len);
+        for (uint i = 0; i < _len; i++) {
             (decimals[i],,tokenLts[i],,,,,,,) = aaveData.getReserveConfigurationData(tokens[i]);
         }
     }
