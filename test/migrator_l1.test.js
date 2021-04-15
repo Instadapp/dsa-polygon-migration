@@ -149,7 +149,17 @@ describe("Migrator", function() {
 
   it("test settle", async function() {
     const tokens = [weth]
-    const amts = [ethers.utils.parseEther('10')]
+    const amts = [ethers.utils.parseEther('60')]
+
+    const tx = await migrator.settle(tokens, amts)
+    const receipt = await tx.wait()
+
+    // console.log(receipt)
+  })
+
+  it("test settle 2", async function() {
+    const tokens = [usdc]
+    const amts = [ethers.utils.parseUnits('20000', 6)]
 
     const tx = await migrator.settle(tokens, amts)
     const receipt = await tx.wait()

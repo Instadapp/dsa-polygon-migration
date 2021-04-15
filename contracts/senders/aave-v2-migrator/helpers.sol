@@ -5,7 +5,6 @@ import { DSMath } from "../../common/math.sol";
 import { Stores } from "../../common/stores-mainnet.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
 
 import { Variables } from "./variables.sol";
 
@@ -83,20 +82,15 @@ abstract contract Helpers is DSMath, Stores, Variables {
             ) = aaveData.getUserReserveData(_token, sourceDsa);
 
 
-            stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i]; // Failing here?? 'invalid-opcode'
+            stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i];
             variableBorrow[i] = _data.variableBorrowAmts[i] == uint(-1) ? variableDebt : _data.variableBorrowAmts[i];
-            // console.log("stableBorrow", stableBorrow[i]);
-            // console.log("variableBorrow", variableBorrow[i]);
 
             totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
-            // console.log("totalBorrow", totalBorrow[i]);
 
             if (totalBorrow[i] > 0) {
                 IERC20(_token).safeApprove(address(aave), totalBorrow[i]);
             }
-            // console.log("approved", IERC20(_token).allowance(address(this), address(aave)));
-            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this)); // Failing over here ///
-            console.log("balanceOf", IERC20(_token).balanceOf(address(this)));
+            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this));
         }
     }
 
@@ -119,12 +113,7 @@ abstract contract Helpers is DSMath, Stores, Variables {
             } else {
                 _finalAmt = supplyAmts[i];
             }
-            console.log("balanceOf inital this", aTokenContract.balanceOf(address(this)));
-            console.log("balanceOf inital dsa", aTokenContract.balanceOf(dsa));
-            console.log("_finalAmt", _finalAmt);
-            console.log("allownace", IERC20(_aToken).allowance(dsa, address(this)));
             require(aTokenContract.transferFrom(dsa, address(this), _finalAmt), "_getAtokens: atokens transfer failed");
-            console.log("balanceOf final", aTokenContract.balanceOf(address(this)));
 
             _finalAmt = wmul(_finalAmt, fee);
             finalAmts[i] = _finalAmt;
