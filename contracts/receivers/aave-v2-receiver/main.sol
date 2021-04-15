@@ -104,7 +104,7 @@ contract AaveV2Migrator is MigrateResolver {
         transferAtokens(aave, dsa, supplyTokens, supplyAmts);
 
         // Have to borrow from user's account & transfer
-        borrowAndTransferSpells(aave, dsa, supplyTokens, borrowTokens, borrowAmts);
+        borrowAndTransferSpells(dsa, supplyTokens, borrowTokens, borrowAmts);
 
         isPositionSafe();
 

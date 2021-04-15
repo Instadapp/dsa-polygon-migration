@@ -93,7 +93,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
         }
     }
 
-    function borrowAndTransferSpells(AaveInterface aave, address dsa, address[] memory supplyTokens, address[] memory borrowTokens, uint[] memory borrowAmts) internal {
+    function borrowAndTransferSpells(address dsa, address[] memory supplyTokens, address[] memory borrowTokens, uint[] memory borrowAmts) internal {
         for (uint i = 0; i < borrowTokens.length; i++) {
             SpellHelperData memory data;
             data.token = borrowTokens[i] == maticAddr ? wmaticAddr : borrowTokens[i];
