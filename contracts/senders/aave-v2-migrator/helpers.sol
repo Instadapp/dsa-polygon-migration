@@ -5,6 +5,7 @@ import { DSMath } from "../../common/math.sol";
 import { Stores } from "../../common/stores-mainnet.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 import { Variables } from "./variables.sol";
 
@@ -68,7 +69,10 @@ abstract contract Helpers is DSMath, Stores, Variables {
                 ,,,,,
             ) = aaveData.getUserReserveData(_token, sourceDsa);
 
-            stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i];
+            console.log("debts", stableDebt, variableDebt);
+            console.log("token", _token);
+
+            stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i]; // Failing here?? 'invalid-opcode'
             variableBorrow[i] = _data.variableBorrowAmts[i] == uint(-1) ? variableDebt : _data.variableBorrowAmts[i];
 
             totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
