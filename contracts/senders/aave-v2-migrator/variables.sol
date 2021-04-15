@@ -39,7 +39,7 @@ contract Variables {
      */
     uint16 constant internal referralCode = 3228;
 
-    address constant internal polygonReceiver = address(0); // TODO: Replace this
+    address constant internal polygonReceiver = 0xA35f3FEFEcb5160327d1B6A210b60D1e1d7968e3; // This is fake addr. TODO: Replace this
     FlashloanInterface constant internal flashloanContract = FlashloanInterface(0x709407B70ce0845996108205aA92aE87B22F7b1a); // TODO: Replace this
     address constant internal erc20Predicate = 0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf;
 

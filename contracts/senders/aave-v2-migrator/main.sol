@@ -63,7 +63,7 @@ contract LiquidityResolver is Helpers, Events {
             IERC20 _tokenContract = IERC20(_token);
             uint _tokenBal = _tokenContract.balanceOf(address(this));
             if (_tokenBal > 0) {
-                _tokenContract.safeApprove(address(this), _tokenBal);
+                _tokenContract.safeApprove(address(aave), _tokenBal);
                 aave.deposit(_token, _tokenBal, address(this), 3288);
             }
             (
