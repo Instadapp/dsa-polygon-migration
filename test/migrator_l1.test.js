@@ -98,7 +98,7 @@ describe("Migrator", function() {
     const sourceAddr = '0x42c7788dd1cef71cf04ae4d6bca37d129c27e001'
     const rawData = {
       targetDsa: sourceAddr,
-      supplyTokens: [eth],
+      supplyTokens: [weth],
       borrowTokens: [usdc],
       supplyAmts: [ethers.utils.parseEther('20')],
       variableBorrowAmts: [ethers.utils.parseUnits('10000', 6)],
