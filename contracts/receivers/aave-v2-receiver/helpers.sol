@@ -124,8 +124,10 @@ abstract contract Helpers is Stores, DSMath, Variables {
                     castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256)", data.token, splitAmt, 0, 0);
                     if (j == 0) {
                         skip = 1;
-                        targets[k+1] = "AAVE-V2-A"; 
-                        castData[k+1] = abi.encodeWithSignature("enableCollateral(address[])", data.token, splitAmt, 0, 0);
+                        targets[k+1] = "AAVE-V2-A";
+                        address[] memory tokenArr = new address[](1);
+                        tokenArr[i] = data.token;
+                        castData[k+1] = abi.encodeWithSignature("enableCollateral(address[])", tokenArr);
                     }
                 } else {
                     targets[k] = "AAVE-V2-A";
@@ -135,7 +137,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
                 }
             }
 
-            targets[spellsAmt - 1] = "BASIC-A"; // TODO: right spell?
+            targets[spellsAmt - 1] = "BASIC-A";
             castData[spellsAmt - 1] = abi.encodeWithSignature("withdraw(address,uint256,address,uint256,uint256)", data.atoken, data.borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
             AccountInterface(dsa).castMigrate(targets, castData, address(this));
         }
