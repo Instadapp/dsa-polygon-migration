@@ -56,8 +56,21 @@ abstract contract Helpers is DSMath, Stores, Variables {
         }
     }
 
-    function _PaybackCalculate(AaveInterface aave, AaveDataRaw memory _data, address sourceDsa) internal returns (uint[] memory stableBorrow, uint[] memory variableBorrow, uint[] memory totalBorrow) {
-        for (uint i = 0; i < _data.borrowTokens.length; i++) {
+    function _PaybackCalculate(
+        AaveInterface aave,
+        AaveDataRaw memory _data,
+        address sourceDsa
+    ) internal returns (
+        uint[] memory stableBorrow,
+        uint[] memory variableBorrow,
+        uint[] memory totalBorrow
+    ) {
+        uint _len = _data.borrowTokens.length;
+        stableBorrow = new uint256[](_len);
+        variableBorrow = new uint256[](_len);
+        totalBorrow = new uint256[](_len);
+
+        for (uint i = 0; i < _len; i++) {
             require(isSupportedToken[_data.borrowTokens[i]], "token-not-enabled");
             address _token = _data.borrowTokens[i] == ethAddr ? wethAddr : _data.borrowTokens[i];
             _data.borrowTokens[i] = _token;
@@ -71,15 +84,23 @@ abstract contract Helpers is DSMath, Stores, Variables {
 
             console.log("debts", stableDebt, variableDebt);
             console.log("token", _token);
+            console.log("stableBorrowAmts", _data.stableBorrowAmts[i]);
+
 
             stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i]; // Failing here?? 'invalid-opcode'
             variableBorrow[i] = _data.variableBorrowAmts[i] == uint(-1) ? variableDebt : _data.variableBorrowAmts[i];
+            console.log("stableBorrow", stableBorrow[i]);
+            console.log("variableBorrow", variableBorrow[i]);
 
             totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
+            console.log("totalBorrow", totalBorrow[i]);
+
             if (totalBorrow[i] > 0) {
                 IERC20(_token).safeApprove(address(aave), totalBorrow[i]);
             }
-            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this));
+            console.log("approved", IERC20(_token).allowance(address(this), address(aave)));
+            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this)); // Failing over here ///
+            console.log("balanceOf", IERC20(_token).balanceOf(address(this)));
         }
     }
 
