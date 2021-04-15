@@ -49,7 +49,7 @@ contract Variables {
     uint public fee = 998000000000000000; // 0.2% (99.8%) on collateral? TODO: Is this right?
     // TODO: Set by construtor?
     mapping(address => bool) public isSupportedToken;
-    address[] public supportedTokens;
+    address[] public supportedTokens; // don't add ethAddr. Only add wethAddr
 
     /**
      * @dev Aave Provider

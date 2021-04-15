@@ -36,6 +36,6 @@ contract Variables {
 
     // TODO: Set by construtor?
     mapping(address => bool) public isSupportedToken;
-    address[] public supportedTokens;
+    address[] public supportedTokens; // don't add ethAddr. Only add wethAddr
 
 }
