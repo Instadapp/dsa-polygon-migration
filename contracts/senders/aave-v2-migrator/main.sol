@@ -3,6 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 import { TokenInterface } from "../../common/interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { AaveInterface, ATokenInterface, IndexInterface } from "./interfaces.sol";
@@ -172,6 +173,7 @@ contract MigrateResolver is LiquidityResolver {
     }
 
     function migrateFlashCallback(AaveDataRaw calldata _data, address dsa, uint ethAmt) external {
+        console.log("msg.sender", msg.sender);
         require(msg.sender == address(flashloanContract), "not-flashloan-contract"); // TODO: flash loan contract
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 

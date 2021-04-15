@@ -4,9 +4,10 @@ const { ethers, network, waffle } = hre;
 const { provider, deployContract } = waffle
 
 const Migrator = require("../artifacts/contracts/senders/aave-v2-migrator/main.sol/MigrateResolver.json")
+const InstaPool = require("../artifacts/contracts/liquidity.sol/InstaPool.json")
 
 describe("Migrator", function() {
-  let accounts, masterAddress, master, migrator, ethereum
+  let accounts, masterAddress, master, migrator, ethereum, instapool
 
   const erc20Abi = [
     "function balanceOf(address) view returns (uint)",
@@ -32,8 +33,10 @@ describe("Migrator", function() {
     master = ethers.provider.getSigner(masterAddress)
 
     migrator = await deployContract(master, Migrator, [])
+    instapool = await deployContract(master, InstaPool, [])
 
     console.log("Migrator deployed: ", migrator.address)
+    console.log("Instapool deployed: ", instapool.address)
 
     const usdcHolderAddr = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503' // 1,000,000
     await accounts[0].sendTransaction({ to: usdcHolderAddr, value: ethers.utils.parseEther('1') })
@@ -82,6 +85,7 @@ describe("Migrator", function() {
     const wethHolder = ethers.provider.getSigner(wethHolderAddr)
     const wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
     await wethContract.transfer(migrator.address, ethers.utils.parseUnits('500', 18))
+    await wethContract.transfer(instapool.address, ethers.utils.parseUnits('10', 18))
 
     ethereum = network.provider
   })
@@ -111,7 +115,7 @@ describe("Migrator", function() {
     })
     const signer = ethers.provider.getSigner(sourceAddr)
 
-    const tx = await migrator.connect(signer).migrate(rawData)
+    const tx = await migrator.connect(signer).migrateWithFlash(rawData, ethers.utils.parseEther('20'))
     const receipt = await tx.wait()
 
     console.log(receipt)

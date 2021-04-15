@@ -40,7 +40,7 @@ contract Variables {
     uint16 constant internal referralCode = 3228;
 
     address constant internal polygonReceiver = address(0); // TODO: Replace this
-    FlashloanInterface constant internal flashloanContract = FlashloanInterface(address(0)); // TODO: Replace this
+    FlashloanInterface constant internal flashloanContract = FlashloanInterface(0x709407B70ce0845996108205aA92aE87B22F7b1a); // TODO: Replace this
     address constant internal erc20Predicate = 0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf;
 
     // This will be used to have debt/collateral ratio always 20% less than liquidation
