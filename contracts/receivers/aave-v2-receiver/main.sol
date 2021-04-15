@@ -19,6 +19,10 @@ contract MigrateResolver is Helpers, Events {
 
     function addTokenSupport(address[] memory _tokens) public {
         require(msg.sender == instaIndex.master(), "not-master");
+        for (uint i = 0; i < supportedTokens.length; i++) {
+            delete isSupportedToken[supportedTokens[i]];
+        }
+        delete supportedTokens;
         for (uint i = 0; i < _tokens.length; i++) {
             require(!isSupportedToken[_tokens[i]], "already-added");
             isSupportedToken[_tokens[i]] = true;

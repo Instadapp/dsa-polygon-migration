@@ -20,6 +20,10 @@ contract LiquidityResolver is Helpers, Events {
 
     function addTokenSupport(address[] memory _tokens) public {
         require(msg.sender == instaIndex.master(), "not-master");
+        for (uint i = 0; i < supportedTokens.length; i++) {
+            delete isSupportedToken[supportedTokens[i]];
+        }
+        delete supportedTokens;
         for (uint i = 0; i < _tokens.length; i++) {
             require(!isSupportedToken[_tokens[i]], "already-added");
             isSupportedToken[_tokens[i]] = true;
@@ -53,8 +57,7 @@ contract LiquidityResolver is Helpers, Events {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         for (uint i = 0; i < supportedTokens.length; i++) {
             address _token = supportedTokens[i];
-            if (_token == ethAddr) {
-                _token = wethAddr;
+            if (_token == wethAddr) {
                 if (address(this).balance > 0) {
                     TokenInterface(wethAddr).deposit{value: address(this).balance}();
                 }
