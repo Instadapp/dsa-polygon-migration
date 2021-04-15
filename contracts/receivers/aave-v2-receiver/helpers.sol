@@ -63,6 +63,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
             data.token = supplyTokens[i] == maticAddr ? wmaticAddr : supplyTokens[i];
             (data.atoken, ,) = aaveData.getReserveTokensAddresses(data.token);
             IERC20 _atokenContract = IERC20(data.atoken);
+            IERC20 _tokenContract = IERC20(data.token);
             data.atokenBal = _atokenContract.balanceOf(address(this));
             data.supplyAmt = supplyAmts[i];
 
@@ -73,6 +74,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
                 if (data.tokenLiq < _reqAmt) {
                     data.flashAmt = flashAmts[data.token];
                     if (data.flashAmt > 0) {
+                        _tokenContract.approve(address(aave), data.flashAmt);
                         aave.deposit(data.token, data.flashAmt, address(this), 3288); // TODO: what is our ID on Polygon?
                         data.tokenLiq += data.flashAmt;
                         data.isFlash = true;
@@ -83,6 +85,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
                 uint splitAmt = _reqAmt/num; // TODO: Check decimal
                 uint finalSplit = _reqAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
 
+                _tokenContract.approve(address(aave), _reqAmt);
                 for (uint j = 0; j < num; j++) {
                     if (j < num - 1) {
                         aave.borrow(data.token, splitAmt, 2, 3288, address(this));
