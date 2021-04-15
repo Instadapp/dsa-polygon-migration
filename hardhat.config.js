@@ -13,19 +13,27 @@ const { utils } = require("ethers");
 
 const ALCHEMY_ID = process.env.ALCHEMY_ID;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const QUIKNODE_ID = process.env.QUIKNODE_ID;
 // ================================= CONFIG =========================================
 module.exports = {
-  defaultNetwork: "hardhat",
+  // defaultNetwork: "hardhat",
   tenderly: {
     project: "team-development",
     username: "InstaDApp",
     forkNetwork: "1"
   },
   networks: {
-    hardhat: {
+    // hardhat: { // mainnet forking
+    //   forking: {
+    //     url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID}`,
+    //     blockNumber: 12240294,
+    //   },
+    //   blockGasLimit: 12000000,
+    // },
+    hardhat: { // matic forking
       forking: {
-        url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID}`,
-        blockNumber: 12240294,
+        url: `https://cold-red-river.matic.quiknode.pro/${QUIKNODE_ID}/`,
+        blockNumber: 13317966,
       },
       blockGasLimit: 12000000,
     },
