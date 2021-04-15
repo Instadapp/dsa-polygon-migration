@@ -56,7 +56,7 @@ contract MigrateResolver is Helpers, Events {
             IERC20 _tokenContract = IERC20(_token);
             uint _tokenBal = _tokenContract.balanceOf(address(this));
             if (_tokenBal > 0) {
-                _tokenContract.approve(address(this), _tokenBal);
+                _tokenContract.approve(address(aave), _tokenBal);
                 aave.deposit(_token, _tokenBal, address(this), 3288);
             }
             (
@@ -129,4 +129,6 @@ contract AaveV2Migrator is MigrateResolver {
 
         delete positions[_id];
     }
+
+    receive() external payable {}
 }

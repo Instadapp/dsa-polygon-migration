@@ -49,7 +49,12 @@ abstract contract Helpers is Stores, DSMath, Variables {
         return data;
     }
 
-    function isPositionSafe() internal returns (bool isOk) {
+    function getCollateralStatus(address token, address user) internal view returns (bool enabled) {
+        (uint bal, , , , , , , , bool isCol) = aaveData.getUserReserveData(token, user);
+        enabled = bal > 0 && !isCol;
+    }
+
+    function isPositionSafe() internal view returns (bool isOk) {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
         uint minLimit = wdiv(1e18, safeRatioGap);
@@ -90,6 +95,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
                     if (j < num - 1) {
                         aave.borrow(data.token, splitAmt, 2, 3288, address(this));
                         aave.deposit(data.token, splitAmt, address(this), 3288);
+                        if (j == 0) aave.setUserUseReserveAsCollateral(data.token, true);
                     } else {
                         aave.borrow(data.token, finalSplit, 2, 3288, address(this));
                         aave.deposit(data.token, finalSplit, address(this), 3288);
@@ -105,7 +111,7 @@ abstract contract Helpers is Stores, DSMath, Variables {
         }
     }
 
-    function borrowAndTransferSpells(AaveInterface aave, address dsa, address[] memory borrowTokens, uint[] memory borrowAmts) internal {
+    function borrowAndTransferSpells(AaveInterface aave, address dsa, address[] memory supplyTokens, address[] memory borrowTokens, uint[] memory borrowAmts) internal {
         for (uint i = 0; i < borrowTokens.length; i++) {
             SpellHelperData memory data;
             data.token = borrowTokens[i] == maticAddr ? wmaticAddr : borrowTokens[i];
@@ -124,16 +130,24 @@ abstract contract Helpers is Stores, DSMath, Variables {
             uint splitAmt = data.borrowAmt/num; // TODO: Check decimal
             uint finalSplit = data.borrowAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
 
-            uint spellsAmt = (2 * num) + 1;
+            // uint spellsAmt = num <= 1 ? (2 * num) + 1 : (2 * num) + 2;
+            uint spellsAmt = (2 * num) + 2;
             string[] memory targets = new string[](spellsAmt);
             bytes[] memory castData = new bytes[](spellsAmt);
+
+            targets[0] = "AAVE-V2-A";
+            castData[0] = abi.encodeWithSignature("enableCollateral(address[])", supplyTokens);
+                    
             for (uint j = 0; j < num; j++) {
-                uint k = j * 2;
+                uint k = j * 2 + 1;
+                // uint skip = 0;
                 if (i < num - 1) {
                     targets[k] = "AAVE-V2-A";
                     castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, splitAmt, 2, 0, 0);
                     targets[k+1] = "AAVE-V2-A";
                     castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256)", data.token, splitAmt, 0, 0);
+                    // targets[k+1] = "AAVE-V2-A"; // TODO : enableCollateral
+                    // castData[k+1] = abi.encodeWithSignature("enableCollateral(address[])", data.token, splitAmt, 0, 0);
                 } else {
                     targets[k] = "AAVE-V2-A";
                     castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, finalSplit, 2, 0, 0);
@@ -146,8 +160,8 @@ abstract contract Helpers is Stores, DSMath, Variables {
                 aave.withdraw(data.token, data.flashAmt, address(this));
             }
 
-            targets[spellsAmt] = "BASIC-A"; // TODO: right spell?
-            castData[spellsAmt] = abi.encode("withdraw(address,uint256,address,uint256,uint256)", data.atoken, data.borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
+            targets[spellsAmt - 1] = "BASIC-A"; // TODO: right spell?
+            castData[spellsAmt - 1] = abi.encodeWithSignature("withdraw(address,uint256,address,uint256,uint256)", data.atoken, data.borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
             AccountInterface(dsa).castMigrate(targets, castData, address(this));
         }
 
