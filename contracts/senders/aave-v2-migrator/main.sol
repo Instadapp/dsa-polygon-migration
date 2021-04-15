@@ -154,7 +154,11 @@ contract MigrateResolver is LiquidityResolver {
 
         isPositionSafe();
 
+        console.log("here");
+
         stateSender.syncState(polygonReceiver, abi.encode(data));
+
+        console.log("here2");
 
         emit LogAaveV2Migrate(
             sourceDsa,
@@ -181,7 +185,9 @@ contract MigrateResolver is LiquidityResolver {
         wethContract.approve(address(aave), ethAmt);
         aave.deposit(wethAddr, ethAmt, address(this), 3288);
         _migrate(aave, _data, dsa);
+        console.log("here3");
         aave.withdraw(wethAddr, ethAmt, address(this));
+        console.log("here4");
         wethContract.transfer(address(flashloanContract), ethAmt);
     }
 

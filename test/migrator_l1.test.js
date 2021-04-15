@@ -11,7 +11,8 @@ describe("Migrator", function() {
 
   const erc20Abi = [
     "function balanceOf(address) view returns (uint)",
-    "function transfer(address to, uint amount)"
+    "function transfer(address to, uint amount)",
+    "function approve(address spender, uint amount)"
   ]
 
   const syncStateAbi = [
@@ -25,7 +26,13 @@ describe("Migrator", function() {
   const aave = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9'
   const eth = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
   const weth = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+
+  const aweth = '0x030ba81f1c18d280636f32af80b9aad02cf0854e'
+
+  const maxValue = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
+
   const supportedTokens = [usdc, usdt, dai, wbtc, aave, eth, weth]
+
   before(async function() {
     masterAddress = "0xb1DC62EC38E6E3857a887210C38418E4A17Da5B2"
     await hre.network.provider.request({
@@ -115,11 +122,12 @@ describe("Migrator", function() {
 
   it("test migrate", async function() {
     const sourceAddr = '0x42c7788dd1cef71cf04ae4d6bca37d129c27e001'
+
     const rawData = {
       targetDsa: sourceAddr,
       supplyTokens: [weth],
       borrowTokens: [usdc],
-      supplyAmts: [ethers.utils.parseEther('20')],
+      supplyAmts: [ethers.utils.parseEther('60')],
       variableBorrowAmts: [ethers.utils.parseUnits('10000', 6)],
       stableBorrowAmts: [ethers.utils.parseUnits('10000', 6)]
     }
@@ -130,7 +138,10 @@ describe("Migrator", function() {
     })
     const signer = ethers.provider.getSigner(sourceAddr)
 
-    const tx = await migrator.connect(signer).migrateWithFlash(rawData, ethers.utils.parseEther('40'))
+    const awethContract = new ethers.Contract(aweth, erc20Abi, signer)
+    await awethContract.approve(migrator.address, maxValue)
+
+    const tx = await migrator.connect(signer).migrateWithFlash(rawData, ethers.utils.parseEther('80'))
     const receipt = await tx.wait()
 
     // console.log(receipt)

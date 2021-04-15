@@ -82,10 +82,6 @@ abstract contract Helpers is DSMath, Stores, Variables {
                 ,,,,,
             ) = aaveData.getUserReserveData(_token, sourceDsa);
 
-            console.log("debts", stableDebt, variableDebt);
-            console.log("token", _token);
-            console.log("stableBorrowAmts", _data.stableBorrowAmts[i]);
-
 
             stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i]; // Failing here?? 'invalid-opcode'
             variableBorrow[i] = _data.variableBorrowAmts[i] == uint(-1) ? variableDebt : _data.variableBorrowAmts[i];
@@ -98,9 +94,7 @@ abstract contract Helpers is DSMath, Stores, Variables {
             if (totalBorrow[i] > 0) {
                 IERC20(_token).safeApprove(address(aave), totalBorrow[i]);
             }
-            console.log("approved", IERC20(_token).allowance(address(this), address(aave)));
-            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this)); // Failing over here ///
-            console.log("balanceOf", IERC20(_token).balanceOf(address(this)));
+            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this));
         }
     }
 
@@ -124,7 +118,7 @@ abstract contract Helpers is DSMath, Stores, Variables {
                 _finalAmt = supplyAmts[i];
             }
 
-            aTokenContract.transferFrom(dsa, address(this), finalAmts[i]);
+            require(aTokenContract.transferFrom(dsa, address(this), finalAmts[i]), "transfer-failed");
 
             _finalAmt = wmul(_finalAmt, fee);
             finalAmts[i] = _finalAmt;
