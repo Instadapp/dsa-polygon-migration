@@ -14,6 +14,10 @@ describe("Migrator", function() {
     "function transfer(address to, uint amount)"
   ]
 
+  const syncStateAbi = [
+    "function register(address sender, address receiver)"
+  ]
+
   const usdc = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
   const usdt = '0xdac17f958d2ee523a2206206994597c13d831ec7'
   const dai = '0x6b175474e89094c44da98b954eedeac495271d0f'
@@ -37,6 +41,17 @@ describe("Migrator", function() {
 
     console.log("Migrator deployed: ", migrator.address)
     console.log("Instapool deployed: ", instapool.address)
+
+    const syncStateOwnerAddr = '0xFa7D2a996aC6350f4b56C043112Da0366a59b74c'
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ syncStateOwnerAddr ]
+    })
+    const syncStateOwner = ethers.provider.getSigner(syncStateOwnerAddr)
+    const syncStateContract = new ethers.Contract('0x28e4F3a7f651294B9564800b2D01f35189A5bFbE', syncStateAbi, syncStateOwner)
+    await accounts[0].sendTransaction({ to: syncStateOwnerAddr, value: ethers.utils.parseEther('1') })
+    await syncStateContract.register(migrator.address, '0xA35f3FEFEcb5160327d1B6A210b60D1e1d7968e3')
+    // await syncStateContract.register(instapool.address, '0xA35f3FEFEcb5160327d1B6A210b60D1e1d7968e3')
 
     const usdcHolderAddr = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503' // 1,000,000
     await accounts[0].sendTransaction({ to: usdcHolderAddr, value: ethers.utils.parseEther('1') })
