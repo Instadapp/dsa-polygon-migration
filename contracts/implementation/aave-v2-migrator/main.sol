@@ -2,6 +2,9 @@ pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
 import { Variables } from "./variables.sol";
+import "hardhat/console.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 
 /**
  * @title InstaAccountV2.
@@ -16,18 +19,19 @@ contract Constants is Variables {
     // InstaIndex Address.
     address internal constant instaIndex = 0xA9B99766E6C676Cf1975c0D3166F96C0848fF5ad;
     // Migration contract Address.
-    address internal constant migrationContract = address(0); // TODO: update address on deployment
+    address internal immutable migrationContract;
     // Connnectors Address.
     address public immutable connectorsM1;
 
-    constructor(address _connectors) {
+    constructor(address _connectors, address _migration) {
         connectorsM1 = _connectors;
+        migrationContract = _migration;
     }
 }
 
 contract InstaImplementationM1 is Constants {
 
-    constructor(address _connectors) Constants(_connectors) {}
+    constructor(address _connectors, address _migration) Constants(_connectors, _migration) {}
 
     function decodeEvent(bytes memory response) internal pure returns (string memory _eventCode, bytes memory _eventParams) {
         if (response.length > 0) {
