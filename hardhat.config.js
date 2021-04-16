@@ -45,7 +45,7 @@ module.exports = {
       url: `https://eth.alchemyapi.io/v2/${ALCHEMY_ID}`,
       accounts: [`0x${PRIVATE_KEY}`],
       timeout: 150000,
-      gasPrice: parseInt(utils.parseUnits("93", "gwei"))
+      gasPrice: parseInt(utils.parseUnits("131", "gwei"))
     },
     matic: {
       url: "https://rpc-mainnet.maticvigil.com/",
