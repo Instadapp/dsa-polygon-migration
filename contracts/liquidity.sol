@@ -287,7 +287,7 @@ contract DydxFlashloaner is Setup, ICallee, DydxFlashloanBase, DSMath {
 
         wethContract.transfer(address(migrationAddr), ethAmt);
 
-        Address.functionCall(address(migrationAddr), callData); // Failing here?? `revert Address: low-level call failed`
+        Address.functionCall(address(migrationAddr), callData);
     }
 
     function initiateFlashLoan(bytes memory data, uint ethAmt) external {
