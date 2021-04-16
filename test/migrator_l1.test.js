@@ -29,6 +29,7 @@ describe("Migrator", function() {
 
   const aweth = '0x030ba81f1c18d280636f32af80b9aad02cf0854e'
   const aaave = '0xFFC97d72E13E01096502Cb8Eb52dEe56f74DAD7B'
+  const awbtc = '0x9ff58f4ffb29fa2266ab25e75e2a8b3503311656'
 
   const maxValue = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
 
@@ -223,4 +224,46 @@ describe("Migrator", function() {
     const tx = await migrator.connect(signer).migrateWithFlash(rawData, ethers.utils.parseEther('1200'))
     const receipt = await tx.wait()
   })
+
+  it("test migrate 4", async function() {
+    const sourceAddr = '0xeb43b5597e3bde0b0c03ee6731ba7c0247e1581e'
+
+    const rawData = {
+      targetDsa: sourceAddr,
+      supplyTokens: [weth, wbtc],
+      borrowTokens: [usdc],
+      supplyAmts: [ethers.utils.parseEther('4000'), ethers.utils.parseUnits('30', 8)],
+      variableBorrowAmts: [ethers.utils.parseUnits('1000000', 6)],
+      stableBorrowAmts: [ethers.utils.parseUnits('5000000', 6)]
+    }
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ sourceAddr ]
+    })
+    const signer = ethers.provider.getSigner(sourceAddr)
+
+    const awethContract = new ethers.Contract(aweth, erc20Abi, signer)
+    await awethContract.approve(migrator.address, maxValue)
+    const awbtcContract = new ethers.Contract(awbtc, erc20Abi, signer)
+    await awbtcContract.approve(migrator.address, maxValue)
+
+    const tx = await migrator.connect(signer).migrateWithFlash(rawData, ethers.utils.parseEther('4000'))
+    const receipt = await tx.wait()
+  })
+
+  // it("test settle 3", async function() {
+  //   const tokens = [usdc, usdt, weth, wbtc]
+  //   const amts = [
+  //     ethers.utils.parseUnits('500000', 6),
+  //     ethers.utils.parseUnits('40000', 6),
+  //     ethers.utils.parseEther('1000'),
+  //     ethers.utils.parseUnits('25', 8)
+  //   ]
+
+  //   const tx = await migrator.settle(tokens, amts)
+  //   const receipt = await tx.wait()
+
+  //   // console.log(receipt)
+  // })
 })
