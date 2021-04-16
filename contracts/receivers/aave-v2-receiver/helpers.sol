@@ -68,9 +68,9 @@ abstract contract Helpers is Stores, DSMath, Variables {
 
             if (data.atokenBal < data.supplyAmt) {
                 uint _reqAmt = data.supplyAmt - data.atokenBal;
-                uint num = _reqAmt/data.tokenLiq + 1; // TODO: Is this right
-                uint splitAmt = _reqAmt/num; // TODO: Check decimal
-                uint finalSplit = _reqAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
+                uint num = _reqAmt/data.tokenLiq + 1;
+                uint splitAmt = _reqAmt/num;
+                uint finalSplit = _reqAmt - (splitAmt * (num - 1));
 
                 _tokenContract.approve(address(aave), _reqAmt);
                 for (uint j = 0; j < num; j++) {
@@ -97,10 +97,9 @@ abstract contract Helpers is Stores, DSMath, Variables {
             (data.tokenLiq,,,,,,,,,) = aaveData.getReserveData(data.token);
             data.borrowAmt = borrowAmts[i];
 
-            // TODO: Check number of loops needed. Borrow and supply on user's account.
-            uint num = data.borrowAmt/data.tokenLiq + 1; // TODO: Is this right
-            uint splitAmt = data.borrowAmt/num; // TODO: Check decimal
-            uint finalSplit = data.borrowAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
+            uint num = data.borrowAmt/data.tokenLiq + 1;
+            uint splitAmt = data.borrowAmt/num;
+            uint finalSplit = data.borrowAmt - (splitAmt * (num - 1));
 
             uint spellsAmt = num <= 1 ? (2 * (num + 1)) : (2 * (num + 1)) + 1;
             string[] memory targets = new string[](spellsAmt);
