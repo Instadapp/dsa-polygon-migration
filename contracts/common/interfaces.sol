@@ -15,14 +15,3 @@ interface MemoryInterface {
     function getUint(uint id) external returns (uint num);
     function setUint(uint id, uint val) external;
 }
-
-interface AccountInterface {
-    function enable(address) external;
-    function disable(address) external;
-    function isAuth(address) external view returns (bool);
-    function cast(
-        string[] calldata _targets,
-        bytes[] calldata _datas,
-        address _origin
-    ) external payable returns (bytes32);
-}

@@ -113,7 +113,7 @@ contract AaveV2Migrator is MigrateResolver {
 
     function onStateReceive(uint256 stateId, bytes calldata receivedData) external {
         // Add some more require statements. Any kind of hashing for better privacy?
-        // require(msg.sender == maticReceiver, "not-receiver-address"); // TODO : Add later, commenting for test cases
+        require(msg.sender == maticReceiver, "not-receiver-address");
         require(stateId > lastStateId, "wrong-data");
         lastStateId = stateId;
 
@@ -123,7 +123,9 @@ contract AaveV2Migrator is MigrateResolver {
 
         emit LogStateSync(stateId, receivedData);
     }
+}
 
+contract InstaAaveV2MigratorReceiverImplementation is AaveV2Migrator {
     function migrate(uint _id) external {
         bytes memory _data = positions[_id];
 

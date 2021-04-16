@@ -1,7 +1,7 @@
 pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
-import { TokenInterface, AccountInterface } from "../../common/interfaces.sol";
+import { TokenInterface } from "../../common/interfaces.sol";
 import { AaveInterface, ATokenInterface, AaveDataRaw } from "./interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { Events } from "./events.sol";

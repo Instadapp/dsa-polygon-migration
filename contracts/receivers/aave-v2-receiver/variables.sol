@@ -14,7 +14,7 @@ contract Variables {
     /**
     * @dev token Mapping contract Provider
     */
-    TokenMappingInterface constant public tokenMapping = TokenMappingInterface(address(0xa31442F2607947a88807b2bcD5D4951eEdd4A885)); // TODO @thrilok209: FAKE ADDR, CHANGE THIS
+    TokenMappingInterface constant public tokenMapping = TokenMappingInterface(address(0xa471D83e526B6b5D6c876088D34834B44D4064ff));
     /**
      * @dev Aave Provider
      */
@@ -48,7 +48,6 @@ contract Variables {
     /**
      * @dev This will be used to have debt/collateral ratio always 20% less than liquidation
     */
-    // TODO @KaymasJain: Is this number correct for it?
     uint public safeRatioGap = 800000000000000000; // 20%? 2e17
 
     // mapping stateId => user position
