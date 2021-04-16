@@ -12,6 +12,7 @@ import {
 
 contract Variables {
 
+    // Structs
     struct AaveDataRaw {
         address targetDsa;
         uint[] supplyAmts;
@@ -29,27 +30,27 @@ contract Variables {
         address[] borrowTokens;
     }
 
-    struct TokenPrice {
-        uint priceInEth;
-        uint priceInUsd;
-    }
+    // Constant Addresses //
 
     /**
-     * @dev Aave referal code
-     */
+    * @dev Aave referal code
+    */
     uint16 constant internal referralCode = 3228;
-
-    address constant internal polygonReceiver = 0xA35f3FEFEcb5160327d1B6A210b60D1e1d7968e3; // This is fake addr. TODO: Replace this
-    FlashloanInterface constant internal flashloanContract = FlashloanInterface(0x709407B70ce0845996108205aA92aE87B22F7b1a); // TODO: Replace this
+    
+    /**
+    * @dev Polygon Receiver contract
+    */
+    address constant internal polygonReceiver = 0xA35f3FEFEcb5160327d1B6A210b60D1e1d7968e3; // This is fake addr. TODO @thrilok209: Replace this
+    
+    /**
+    * @dev Flashloan contract
+    */
+    FlashloanInterface constant internal flashloanContract = FlashloanInterface(0x709407B70ce0845996108205aA92aE87B22F7b1a); // TODO @thrilok209: Replace this
+    
+    /**
+    * @dev ERC20 Predicate address
+    */
     address constant internal erc20Predicate = 0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf;
-
-    // This will be used to have debt/collateral ratio always 20% less than liquidation
-    // TODO: Is this number correct for it?
-    uint public safeRatioGap = 800000000000000000; // 20%?
-    uint public fee = 998000000000000000; // 0.2% (99.8%) on collateral? TODO: Is this right?
-    // TODO: Set by construtor?
-    mapping(address => bool) public isSupportedToken;
-    address[] public supportedTokens; // don't add ethAddr. Only add wethAddr
 
     /**
      * @dev Aave Provider
@@ -71,13 +72,39 @@ contract Variables {
      */
     StateSenderInterface constant internal stateSender = StateSenderInterface(0x28e4F3a7f651294B9564800b2D01f35189A5bFbE);
 
-
-    // InstaIndex Address.
+    /**
+     * @dev InstaIndex Address.
+     */
     IndexInterface public constant instaIndex = IndexInterface(0x2971AdFa57b20E5a416aE5a708A8655A9c74f723);
 
     /**
-     * Polygon deposit bridge
+     * @dev Polygon deposit bridge
      */
     RootChainManagerInterface public constant rootChainManager = RootChainManagerInterface(0xA0c68C638235ee32657e8f720a23ceC1bFc77C77);
+    
+    
+    // Storage variables //
+    
+    /**
+    * @dev This will be used to have debt/collateral ratio always 20% less than liquidation
+    */
+    // TODO @KaymasJain: Is this number correct for it?
+    uint public safeRatioGap = 800000000000000000; // 20%?
+
+    /**
+    * @dev fee on collateral
+    */
+    // TODO @KaymasJain: Is this number correct for it?
+    uint public fee = 998000000000000000; // 0.2% (99.8%) on collateral? TODO: Is this right?
+
+    /**
+    * @dev Mapping of supported token
+    */
+    mapping(address => bool) public isSupportedToken;
+
+    /**
+    * @dev Array of supported token
+    */
+    address[] public supportedTokens; // don't add ethAddr. Only add wethAddr
 
 }
