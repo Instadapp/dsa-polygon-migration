@@ -166,12 +166,6 @@ contract MigrateResolver is LiquidityResolver {
             stableBorrows
         );
     }
-
-    function migrate(AaveDataRaw calldata _data) external {
-        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
-        _migrate(aave, _data, msg.sender);
-    }
-
     function migrateFlashCallback(AaveDataRaw calldata _data, address dsa, uint ethAmt) external {
         require(msg.sender == address(flashloanContract), "not-flashloan-contract");
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
@@ -183,6 +177,13 @@ contract MigrateResolver is LiquidityResolver {
         aave.withdraw(wethAddr, ethAmt, address(this));
         require(wethContract.transfer(address(flashloanContract), ethAmt), "migrateFlashCallback: weth transfer failed to Instapool");
     }
+}
+
+contract InstaAaveV2MigratorSenderImplementation is MigrateResolver {
+    function migrate(AaveDataRaw calldata _data) external {
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+        _migrate(aave, _data, msg.sender);
+    }
 
     function migrateWithFlash(AaveDataRaw calldata _data, uint ethAmt) external {
         bytes memory callbackData = abi.encodeWithSelector(bytes4(this.migrateFlashCallback.selector), _data, msg.sender, ethAmt);
@@ -190,5 +191,4 @@ contract MigrateResolver is LiquidityResolver {
 
         flashloanContract.initiateFlashLoan(data, ethAmt);
     }
-
 }
