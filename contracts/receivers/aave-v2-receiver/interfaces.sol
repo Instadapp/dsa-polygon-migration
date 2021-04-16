@@ -10,6 +10,7 @@ interface AccountInterface {
         bytes[] calldata _datas,
         address _origin
     ) external payable returns (bytes32);
+    function version() external view returns (uint);
 }
 
 interface TokenMappingInterface {
