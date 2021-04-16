@@ -88,7 +88,7 @@ contract Variables {
     /**
     * @dev This will be used to have debt/collateral ratio always 20% less than liquidation
     */
-    uint public safeRatioGap = 800000000000000000; // 20%
+    uint public safeRatioGap = 800000000000000000; // 80%
 
     /**
     * @dev fee on collateral
