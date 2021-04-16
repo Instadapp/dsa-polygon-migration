@@ -7,7 +7,6 @@ import { TokenInterface } from "../../common/interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { AaveInterface, ATokenInterface, IndexInterface } from "./interfaces.sol";
 import { Events } from "./events.sol";
-import "hardhat/console.sol";
 
 contract LiquidityResolver is Helpers, Events {
     using SafeERC20 for IERC20;
