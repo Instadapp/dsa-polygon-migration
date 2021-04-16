@@ -262,7 +262,7 @@ interface MigrationInterface {
 contract Setup {
     address public constant soloAddr = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
     address public constant wethAddr = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    MigrationInterface public constant migrationAddr = MigrationInterface(0xE3901a1bb3EefBF6bc90c201076e9068b646C1f3); // TODO: Migration address
+    MigrationInterface public constant migrationAddr = MigrationInterface(0xE3901a1bb3EefBF6bc90c201076e9068b646C1f3); // TODO @thrilok209: Chnage to Migration address
     
     TokenInterface wethContract = TokenInterface(wethAddr);
     ISoloMargin solo = ISoloMargin(soloAddr);
