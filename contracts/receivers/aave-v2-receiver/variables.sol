@@ -4,7 +4,8 @@ import {
     TokenMappingInterface,
     AaveLendingPoolProviderInterface,
     AaveDataProviderInterface,
-    IndexInterface
+    IndexInterface,
+    InstaListInterface
 } from "./interfaces.sol";
 
 contract Variables {
@@ -35,6 +36,8 @@ contract Variables {
     address[] public supportedTokens; // don't add maticAddr. Only add wmaticAddr?
 
     // Address which will receive L1 data and post it on L2
-    address public maticReceiver = address(0); // TODO: Change address
+    address public maticReceiver = 0x0000000000000000000000000000000000001001;
+
+    InstaListInterface public instaList = InstaListInterface(0x839c2D3aDe63DF5b0b8F3E57D5e145057Ab41556);
 
 }

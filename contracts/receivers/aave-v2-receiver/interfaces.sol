@@ -96,3 +96,7 @@ interface AaveInterface {
         uint256 healthFactor
     );
 }
+
+interface InstaListInterface {
+    function accountID(address) external view returns (uint);
+}
