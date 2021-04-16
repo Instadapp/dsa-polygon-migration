@@ -99,7 +99,8 @@ contract AaveV2Migrator is MigrateResolver {
         address[] memory supplyTokens = data.supplyTokens;
         address[] memory borrowTokens = data.borrowTokens;
 
-        // TODO: before migrating make sure the new DSA is v2 DSA on L1.
+        // TODO: IMPORTANT!! before migrating make sure the new DSA is v2 DSA on L1.
+        require(instaList.accountID(dsa) != 0, "not-a-dsa");
 
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 
