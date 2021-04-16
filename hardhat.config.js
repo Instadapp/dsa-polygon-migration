@@ -23,20 +23,20 @@ module.exports = {
     forkNetwork: "1"
   },
   networks: {
-    // hardhat: { // mainnet forking
-    //   forking: {
-    //     url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID}`,
-    //     blockNumber: 12240294,
-    //   },
-    //   blockGasLimit: 12000000,
-    // },
-    hardhat: { // matic forking
+    hardhat: { // mainnet forking
       forking: {
-        url: `https://cold-red-river.matic.quiknode.pro/${QUIKNODE_ID}/`,
-        blockNumber: 13317966,
+        url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID}`,
+        blockNumber: 12240294,
       },
       blockGasLimit: 12000000,
     },
+    // hardhat: { // matic forking
+    //   forking: {
+    //     url: `https://cold-red-river.matic.quiknode.pro/${QUIKNODE_ID}/`,
+    //     blockNumber: 13317966,
+    //   },
+    //   blockGasLimit: 12000000,
+    // },
     kovan: {
       url: `https://eth-kovan.alchemyapi.io/v2/${ALCHEMY_ID}`,
       accounts: [`0x${PRIVATE_KEY}`]

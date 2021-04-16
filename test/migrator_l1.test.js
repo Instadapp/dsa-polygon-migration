@@ -28,10 +28,11 @@ describe("Migrator", function() {
   const weth = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 
   const aweth = '0x030ba81f1c18d280636f32af80b9aad02cf0854e'
+  const aaave = '0xFFC97d72E13E01096502Cb8Eb52dEe56f74DAD7B'
 
   const maxValue = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
 
-  const supportedTokens = [usdc, usdt, dai, wbtc, aave, eth, weth]
+  const supportedTokens = [usdc, usdt, dai, wbtc, aave, weth]
 
   before(async function() {
     masterAddress = "0xb1DC62EC38E6E3857a887210C38418E4A17Da5B2"
@@ -169,5 +170,57 @@ describe("Migrator", function() {
     const receipt = await tx.wait()
 
     // console.log(receipt)
+  })
+
+  it("test migrate 2", async function() {
+    const sourceAddr = '0x6126f2a1bd956630f810d5ea351c5a4d65cb5033'
+
+    const rawData = {
+      targetDsa: sourceAddr,
+      supplyTokens: [weth, aave],
+      borrowTokens: [usdc, usdt, dai],
+      supplyAmts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('80')],
+      variableBorrowAmts: [0, 0, ethers.utils.parseUnits('20000', 18)],
+      stableBorrowAmts: [ethers.utils.parseUnits('20000', 6), ethers.utils.parseUnits('20000', 6), ethers.utils.parseUnits('20000', 18)]
+    }
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ sourceAddr ]
+    })
+    const signer = ethers.provider.getSigner(sourceAddr)
+
+    const awethContract = new ethers.Contract(aweth, erc20Abi, signer)
+    await awethContract.approve(migrator.address, maxValue)
+    const aaaveContract = new ethers.Contract(aaave, erc20Abi, signer)
+    await aaaveContract.approve(migrator.address, maxValue)
+
+    const tx = await migrator.connect(signer).migrateWithFlash(rawData, ethers.utils.parseEther('150'))
+    const receipt = await tx.wait()
+  })
+
+  it("test migrate 3", async function() {
+    const sourceAddr = '0x37e5df37885a6d0b43bee9ec2997b1e0037fb490'
+
+    const rawData = {
+      targetDsa: sourceAddr,
+      supplyTokens: [weth],
+      borrowTokens: [usdc, usdt],
+      supplyAmts: [ethers.utils.parseEther('1000')],
+      variableBorrowAmts: [ethers.utils.parseUnits('20000', 6), ethers.utils.parseUnits('40000', 6)],
+      stableBorrowAmts: [ethers.utils.parseUnits('40000', 6), 0]
+    }
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ sourceAddr ]
+    })
+    const signer = ethers.provider.getSigner(sourceAddr)
+
+    const awethContract = new ethers.Contract(aweth, erc20Abi, signer)
+    await awethContract.approve(migrator.address, maxValue)
+
+    const tx = await migrator.connect(signer).migrateWithFlash(rawData, ethers.utils.parseEther('1200'))
+    const receipt = await tx.wait()
   })
 })
