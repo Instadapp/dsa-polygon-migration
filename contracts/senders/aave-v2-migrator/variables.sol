@@ -40,12 +40,12 @@ contract Variables {
     /**
     * @dev Polygon Receiver contract
     */
-    address constant internal polygonReceiver = 0xA35f3FEFEcb5160327d1B6A210b60D1e1d7968e3; // This is fake addr. TODO @thrilok209: Replace this
+    address constant internal polygonReceiver = 0x4A090897f47993C2504144419751D6A91D79AbF4;
     
     /**
     * @dev Flashloan contract
     */
-    FlashloanInterface constant internal flashloanContract = FlashloanInterface(0x709407B70ce0845996108205aA92aE87B22F7b1a); // TODO @thrilok209: Replace this
+    FlashloanInterface constant internal flashloanContract = FlashloanInterface(0xd7e8E6f5deCc5642B77a5dD0e445965B128a585D);
     
     /**
     * @dev ERC20 Predicate address
