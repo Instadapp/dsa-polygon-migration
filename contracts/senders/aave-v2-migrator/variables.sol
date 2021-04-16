@@ -88,14 +88,12 @@ contract Variables {
     /**
     * @dev This will be used to have debt/collateral ratio always 20% less than liquidation
     */
-    // TODO @KaymasJain: Is this number correct for it?
-    uint public safeRatioGap = 800000000000000000; // 20%?
+    uint public safeRatioGap = 800000000000000000; // 80%
 
     /**
     * @dev fee on collateral
     */
-    // TODO @KaymasJain: Is this number correct for it?
-    uint public fee = 998000000000000000; // 0.2% (99.8%) on collateral? TODO: Is this right?
+    uint public fee = 998000000000000000; // 0.2% (99.8%) on collateral
 
     /**
     * @dev Mapping of supported token

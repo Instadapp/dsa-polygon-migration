@@ -143,10 +143,9 @@ abstract contract Helpers is DSMath, Stores, Variables {
     }
 
     function convertTo18(uint amount, uint decimal) internal pure returns (uint) {
-        return amount * (10 ** (18 - decimal)); // TODO: verify this
+        return amount * (10 ** (18 - decimal));
     }
 
-    // TODO: need to verify this throughly
     /*
      * Checks the position to migrate should have a safe gap from liquidation 
     */
