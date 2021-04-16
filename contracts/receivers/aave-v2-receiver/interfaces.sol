@@ -5,12 +5,12 @@ interface AccountInterface {
     function enable(address) external;
     function disable(address) external;
     function isAuth(address) external view returns (bool);
-    function cast(
+    function castMigrate(
         string[] calldata _targets,
         bytes[] calldata _datas,
         address _origin
     ) external payable returns (bytes32);
-    function migrateAave(address) external payable returns (bytes32);
+    function version() external view returns (uint);
 }
 
 interface TokenMappingInterface {
@@ -62,6 +62,18 @@ interface AaveDataProviderInterface {
         bool isActive,
         bool isFrozen
     );
+    function getReserveData(address asset) external view returns (
+        uint256 availableLiquidity,
+        uint256 totalStableDebt,
+        uint256 totalVariableDebt,
+        uint256 liquidityRate,
+        uint256 variableBorrowRate,
+        uint256 stableBorrowRate,
+        uint256 averageStableBorrowRate,
+        uint256 liquidityIndex,
+        uint256 variableBorrowIndex,
+        uint40 lastUpdateTimestamp
+    );
 }
 
 interface AaveInterface {
@@ -84,4 +96,8 @@ interface AaveInterface {
         uint256 ltv,
         uint256 healthFactor
     );
+}
+
+interface InstaListInterface {
+    function accountID(address) external view returns (uint);
 }

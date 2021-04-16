@@ -19,9 +19,11 @@ import {
 } from "./interfaces.sol";
 
 abstract contract Helpers is DSMath, Stores, Variables {
+    using SafeERC20 for IERC20;
 
     function _paybackBehalfOne(AaveInterface aave, address token, uint amt, uint rateMode, address user) private {
-        aave.repay(token, amt, rateMode, user);
+        address _token = token == ethAddr ? wethAddr : token;
+        aave.repay(_token, amt, rateMode, user);
     }
 
     function _PaybackStable(
@@ -52,8 +54,21 @@ abstract contract Helpers is DSMath, Stores, Variables {
         }
     }
 
-    function _PaybackCalculate(AaveInterface aave, AaveDataRaw memory _data, address sourceDsa) internal returns (uint[] memory stableBorrow, uint[] memory variableBorrow, uint[] memory totalBorrow) {
-        for (uint i = 0; i < _data.borrowTokens.length; i++) {
+    function _PaybackCalculate(
+        AaveInterface aave,
+        AaveDataRaw memory _data,
+        address sourceDsa
+    ) internal returns (
+        uint[] memory stableBorrow,
+        uint[] memory variableBorrow,
+        uint[] memory totalBorrow
+    ) {
+        uint _len = _data.borrowTokens.length;
+        stableBorrow = new uint256[](_len);
+        variableBorrow = new uint256[](_len);
+        totalBorrow = new uint256[](_len);
+
+        for (uint i = 0; i < _len; i++) {
             require(isSupportedToken[_data.borrowTokens[i]], "token-not-enabled");
             address _token = _data.borrowTokens[i] == ethAddr ? wethAddr : _data.borrowTokens[i];
             _data.borrowTokens[i] = _token;
@@ -65,21 +80,31 @@ abstract contract Helpers is DSMath, Stores, Variables {
                 ,,,,,
             ) = aaveData.getUserReserveData(_token, sourceDsa);
 
+
             stableBorrow[i] = _data.stableBorrowAmts[i] == uint(-1) ? stableDebt : _data.stableBorrowAmts[i];
             variableBorrow[i] = _data.variableBorrowAmts[i] == uint(-1) ? variableDebt : _data.variableBorrowAmts[i];
 
             totalBorrow[i] = add(stableBorrow[i], variableBorrow[i]);
+
             if (totalBorrow[i] > 0) {
-                IERC20(_token).approve(address(aave), totalBorrow[i]); // TODO: Approval is to Aave address of atokens address?
+                IERC20(_token).safeApprove(address(aave), totalBorrow[i]);
             }
-            aave.borrow(_token, totalBorrow[i], 2, 3088, address(this)); // TODO: Borrowing debt to payback
+            aave.borrow(_token, totalBorrow[i], 2, 3288, address(this));
         }
     }
 
-    function _getAtokens(address dsa, AaveInterface aave, address[] memory supplyTokens, uint[] memory supplyAmts) internal returns (uint[] memory finalAmts) {
+    function _getAtokens(
+        address dsa,
+        address[] memory supplyTokens,
+        uint[] memory supplyAmts
+    ) internal returns (
+        uint[] memory finalAmts
+    ) {
+        finalAmts = new uint256[](supplyTokens.length);
         for (uint i = 0; i < supplyTokens.length; i++) {
             require(isSupportedToken[supplyTokens[i]], "token-not-enabled");
-            (address _aToken, ,) = aaveData.getReserveTokensAddresses(supplyTokens[i]);
+            address _token = supplyTokens[i] == ethAddr ? wethAddr : supplyTokens[i];
+            (address _aToken, ,) = aaveData.getReserveTokensAddresses(_token);
             ATokenInterface aTokenContract = ATokenInterface(_aToken);
             uint _finalAmt;
             if (supplyAmts[i] == uint(-1)) {
@@ -87,8 +112,7 @@ abstract contract Helpers is DSMath, Stores, Variables {
             } else {
                 _finalAmt = supplyAmts[i];
             }
-
-            aTokenContract.transferFrom(dsa, address(this), finalAmts[i]);
+            require(aTokenContract.transferFrom(dsa, address(this), _finalAmt), "_getAtokens: atokens transfer failed");
 
             _finalAmt = wmul(_finalAmt, fee);
             finalAmts[i] = _finalAmt;
@@ -96,10 +120,9 @@ abstract contract Helpers is DSMath, Stores, Variables {
         }
     }
 
-    function isPositionSafe() internal returns (bool isOk) {
+    function isPositionSafe() internal view returns (bool isOk) {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
-        // TODO: Check throughly minLimit = 100%/80% = 125% (20% gap initially)
         uint minLimit = wdiv(1e18, safeRatioGap);
         isOk = healthFactor > minLimit;
         require(isOk, "position-at-risk");
@@ -111,20 +134,22 @@ abstract contract Helpers is DSMath, Stores, Variables {
     
     // Liquidation threshold
     function getTokenLt(address[] memory tokens) internal view returns (uint[] memory decimals, uint[] memory tokenLts) {
-        for (uint i = 0; i < tokens.length; i++) {
+        uint _len = tokens.length;
+        decimals = new uint[](_len);
+        tokenLts = new uint[](_len);
+        for (uint i = 0; i < _len; i++) {
             (decimals[i],,tokenLts[i],,,,,,,) = aaveData.getReserveConfigurationData(tokens[i]);
         }
     }
 
-    function convertTo18(uint amount, uint decimal) internal returns (uint) {
-        return amount * (10 ** (18 - decimal)); // TODO: verify this
+    function convertTo18(uint amount, uint decimal) internal pure returns (uint) {
+        return amount * (10 ** (18 - decimal));
     }
 
-    // TODO: need to verify this throughly
     /*
      * Checks the position to migrate should have a safe gap from liquidation 
     */
-    function _checkRatio(AaveData memory data) public {
+    function _checkRatio(AaveData memory data) public view {
         uint[] memory supplyTokenPrices = getTokensPrices(data.supplyTokens);
         (uint[] memory supplyDecimals, uint[] memory supplyLts) = getTokenLt(data.supplyTokens);
 

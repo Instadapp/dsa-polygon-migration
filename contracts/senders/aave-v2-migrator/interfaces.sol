@@ -72,6 +72,13 @@ interface ATokenInterface {
     function approve(address, uint256) external;
 }
 
+interface AaveOracleInterface {
+    function getAssetPrice(address _asset) external view returns (uint256);
+    function getAssetsPrices(address[] calldata _assets) external view returns(uint256[] memory);
+    function getSourceOfAsset(address _asset) external view returns(address);
+    function getFallbackOracle() external view returns(address);
+}
+
 interface StateSenderInterface {
     function syncState(address receiver, bytes calldata data) external;
     function register(address sender, address receiver) external;
@@ -95,4 +102,8 @@ interface AavePriceOracle {
 interface ChainLinkInterface {
     function latestAnswer() external view returns (int256);
     function decimals() external view returns (uint256);
+}
+
+interface RootChainManagerInterface {
+    function depositFor(address user, address token, bytes calldata depositData) external;
 }

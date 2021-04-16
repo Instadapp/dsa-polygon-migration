@@ -1,4 +1,5 @@
 pragma solidity >=0.7.0;
+pragma experimental ABIEncoderV2;
 
 import { DSMath } from "../../common/math.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -10,11 +11,27 @@ import {
     TokenMappingInterface,
     AaveData,
     AaveDataProviderInterface,
-    AaveInterface
+    AaveInterface,
+    AccountInterface
 } from "./interfaces.sol";
 
 abstract contract Helpers is Stores, DSMath, Variables {
     using SafeERC20 for IERC20;
+
+    struct TransferHelperData {
+        address token;
+        address atoken;
+        uint atokenBal;
+        uint supplyAmt;
+        uint tokenLiq;
+    }
+
+    struct SpellHelperData {
+        address token;
+        address atoken;
+        uint tokenLiq;
+        uint borrowAmt;
+    }
 
     function remapTokens(AaveData memory data) internal view returns (AaveData memory) {
         for (uint i = 0; i < data.supplyTokens.length; i++) {
@@ -28,104 +45,88 @@ abstract contract Helpers is Stores, DSMath, Variables {
         return data;
     }
 
-    function isPositionSafe() internal returns (bool isOk) {
-        // TODO: Check the final position health
+
+    function isPositionSafe() internal view returns (bool isOk) {
+        AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
+        (,,,,,uint healthFactor) = aave.getUserAccountData(address(this));
+        uint minLimit = wdiv(1e18, safeRatioGap);
+        isOk = healthFactor > minLimit;
         require(isOk, "position-at-risk");
     }
 
     function transferAtokens(AaveInterface aave, address dsa, address[] memory supplyTokens, uint[] memory supplyAmts) internal {
         for (uint i = 0; i < supplyTokens.length; i++) {
-            address _token = supplyTokens[i];
-            IERC20 _atokenContract = IERC20(_token); // TODO: Fetch atoken from Aave mapping (change _token to atoken address)
-            uint _atokenBal = _atokenContract.balanceOf(address(this));
-            uint _supplyAmt = supplyAmts[i];
-            bool isFlash;
-            uint _flashAmt;
+            TransferHelperData memory data;
+            data.token = supplyTokens[i] == maticAddr ? wmaticAddr : supplyTokens[i];
+            (data.atoken, ,) = aaveData.getReserveTokensAddresses(data.token);
+            IERC20 _atokenContract = IERC20(data.atoken);
+            IERC20 _tokenContract = IERC20(data.token);
+            data.atokenBal = _atokenContract.balanceOf(address(this));
+            data.supplyAmt = supplyAmts[i];
 
-            // get Aave liquidity of token
-            uint tokenLiq = uint(0);
+            (data.tokenLiq,,,,,,,,,) = aaveData.getReserveData(data.token);
 
-            if (_atokenBal < _supplyAmt) {
-                uint _reqAmt = _supplyAmt - _atokenBal;
-                if (tokenLiq < _reqAmt) {
-                    _flashAmt = flashAmts[_token];
-                    if (_flashAmt > 0) {
-                        aave.deposit(_token, _flashAmt, address(this), 3288); // TODO: what is our ID on Polygon?
-                        tokenLiq += _flashAmt;
-                        isFlash = true;
-                    }
-                }
+            if (data.atokenBal < data.supplyAmt) {
+                uint _reqAmt = data.supplyAmt - data.atokenBal;
+                uint num = _reqAmt/data.tokenLiq + 1;
+                uint splitAmt = _reqAmt/num;
+                uint finalSplit = _reqAmt - (splitAmt * (num - 1));
 
-                uint num = _reqAmt/tokenLiq + 1; // TODO: Is this right
-                uint splitAmt = _reqAmt/num; // TODO: Check decimal
-                uint finalSplit = _reqAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
-
+                _tokenContract.approve(address(aave), _reqAmt);
                 for (uint j = 0; j < num; j++) {
-                    if (i < num - 1) {
-                        aave.borrow(_token, splitAmt, 2, 3288, address(this)); // TODO: is "2" for interest rate mode. Right?
-                        aave.deposit(_token, splitAmt, address(this), 3288);
+                    if (j < num - 1) {
+                        aave.borrow(data.token, splitAmt, 2, 3288, address(this));
+                        aave.deposit(data.token, splitAmt, address(this), 3288);
+                        if (j == 0) aave.setUserUseReserveAsCollateral(data.token, true);
                     } else {
-                        aave.borrow(_token, finalSplit, 2, 3288, address(this)); // TODO: is "2" for interest rate mode. Right?
-                        aave.deposit(_token, finalSplit, address(this), 3288);
+                        aave.borrow(data.token, finalSplit, 2, 3288, address(this));
+                        aave.deposit(data.token, finalSplit, address(this), 3288);
                     }
                 }
             }
 
-            if (isFlash) {
-                aave.withdraw(_token, _flashAmt, address(this));
-            }
-
-            _atokenContract.safeTransfer(dsa, _supplyAmt);
+            _atokenContract.safeTransfer(dsa, data.supplyAmt);
         }
     }
 
-    function borrowAndTransferSpells(AaveInterface aave, address dsa, address[] memory borrowTokens, uint[] memory borrowAmts) internal {
+    function borrowAndTransferSpells(address dsa, address[] memory supplyTokens, address[] memory borrowTokens, uint[] memory borrowAmts) internal {
         for (uint i = 0; i < borrowTokens.length; i++) {
-            address _token = borrowTokens[i];
-            address _atoken = address(0); // TODO: Fetch atoken address
-            // get Aave liquidity of token
-            uint tokenLiq = uint(0);
-            uint _borrowAmt = borrowAmts[i];
+            SpellHelperData memory data;
+            data.token = borrowTokens[i] == maticAddr ? wmaticAddr : borrowTokens[i];
+            (data.atoken, ,) = aaveData.getReserveTokensAddresses(data.token);
+            (data.tokenLiq,,,,,,,,,) = aaveData.getReserveData(data.token);
+            data.borrowAmt = borrowAmts[i];
 
-            uint _flashAmt;
-            bool isFlash;
-            if (tokenLiq < _borrowAmt) {
-                _flashAmt = flashAmts[_token];
-                aave.deposit(_token, _flashAmt, address(this), 3288); // TODO: what is our ID on Polygon?
-                isFlash = true;
-                tokenLiq += _flashAmt;
-            }
-            // TODO: Check number of loops needed. Borrow and supply on user's account.
-            uint num = _borrowAmt/tokenLiq + 1; // TODO: Is this right
-            uint splitAmt = _borrowAmt/num; // TODO: Check decimal
-            uint finalSplit = _borrowAmt - (splitAmt * (num - 1)); // TODO: to resolve upper decimal error
+            uint num = data.borrowAmt/data.tokenLiq + 1;
+            uint splitAmt = data.borrowAmt/num;
+            uint finalSplit = data.borrowAmt - (splitAmt * (num - 1));
 
-            uint spellsAmt = (2 * num) + 1;
+            uint spellsAmt = num <= 1 ? (2 * (num + 1)) : (2 * (num + 1)) + 1;
             string[] memory targets = new string[](spellsAmt);
             bytes[] memory castData = new bytes[](spellsAmt);
+
+            targets[0] = "AAVE-V2-A";
+            castData[0] = abi.encodeWithSignature("enableCollateral(address[])", supplyTokens);
+                    
             for (uint j = 0; j < num; j++) {
-                targets[j] = "AAVE-A";
-                uint k = j * 2;
+                uint k = j * 2 + 1;
+                
                 if (i < num - 1) {
-                    // borrow spell
-                    castData[k] = abi.encode("6abcd3de", _token, splitAmt, 2, 0, 0); // TODO: verify this & is rate mode right?
-                    // deposit spell
-                    castData[k+1] = abi.encode("ce88b439", _token, splitAmt, 2, 0, 0); // TODO: verify this & is rate mode right?
+                    targets[k] = "AAVE-V2-A";
+                    castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, splitAmt, 2, 0, 0);
+                    targets[k+1] = "AAVE-V2-A";
+                    castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256)", data.token, splitAmt, 0, 0);
                 } else {
-                    // borrow spell
-                    castData[k] = abi.encode("6abcd3de", _token, finalSplit, 2, 0, 0); // TODO: verify this & is rate mode right?
-                    // deposit spell
-                    castData[k+1] = abi.encode("ce88b439", _token, finalSplit, 2, 0, 0); // TODO: verify this & is rate mode right?
+                    targets[k] = "AAVE-V2-A";
+                    castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, finalSplit, 2, 0, 0);
+                    targets[k+1] = "AAVE-V2-A";
+                    castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256)", data.token, finalSplit, 0, 0);
                 }
             }
 
-            if (isFlash) {
-                aave.withdraw(_token, _flashAmt, address(this));
-            }
-
-            targets[spellsAmt] = "BASIC-A"; // TODO: right spell?
-            castData[spellsAmt] = abi.encode("4bd3ab82", _atoken, _borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
-            // TODO: Call DSAs cast and borrow (maybe create a new implementation which only this contract can run?)
+            targets[spellsAmt - 1] = "BASIC-A";
+            castData[spellsAmt - 1] = abi.encodeWithSignature("withdraw(address,uint256,address,uint256,uint256)", data.atoken, data.borrowAmt, address(this), 0, 0); // encode the data of atoken withdrawal
+            AccountInterface(dsa).castMigrate(targets, castData, address(this));
         }
 
     }

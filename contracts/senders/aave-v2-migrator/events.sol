@@ -2,16 +2,9 @@ pragma solidity >=0.7.0;
 pragma experimental ABIEncoderV2;
 
 contract Events {
-    event LogDeposit(
-        address owner,
+    event LogSettle(
         address[] tokens,
-        uint[] amts
-    );
-
-    event LogWithdraw(
-        address owner,
-        address[] tokens,
-        uint[] amts
+        uint256[] amts
     );
 
     event LogAaveV2Migrate(
@@ -19,11 +12,22 @@ contract Events {
         address indexed targetDsa,
         address[] supplyTokens,
         address[] borrowTokens,
-        uint[] supplyAmts,
-        uint[] variableBorrowAmts,
-        uint[] stableBorrowAmts
+        uint256[] supplyAmts,
+        uint256[] variableBorrowAmts,
+        uint256[] stableBorrowAmts
     );
 
-    event LogAddTokensSupport(address[] _tokens);
+    event LogUpdateVariables(
+        uint256 oldFee,
+        uint256 newFee,
+        uint256 oldSafeRatioGap,
+        uint256 newSafeRatioGap
+    );
+
+    event LogAddSupportedTokens(
+        address[] tokens
+    );
+
+    event LogVariablesUpdate(uint _safeRatioGap, uint _fee);
 
 }

@@ -6,7 +6,7 @@ import { AaveLendingPoolProviderInterface, AaveDataProviderInterface, AaveMigrat
 
 abstract contract Helpers is DSMath, Stores {
 
-    AaveMigratorInterface constant internal migrator = AaveMigratorInterface(address(2)); // Replace this (Migrator contract)
+    AaveMigratorInterface constant internal migrator = AaveMigratorInterface(address(0xA0557234eB7b3c503388202D3768Cfa2f1AE9Dc2));
 
     /**
      * @dev Aave Data Provider

@@ -3,6 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import { DSMath } from "./common/math.sol";
 
 interface Account {
@@ -261,11 +262,10 @@ interface MigrationInterface {
 contract Setup {
     address public constant soloAddr = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
     address public constant wethAddr = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    MigrationInterface public constant migrationAddr = MigrationInterface(address(0)); // TODO: Migration address
+    MigrationInterface public constant migrationAddr = MigrationInterface(0xA0557234eB7b3c503388202D3768Cfa2f1AE9Dc2);
     
     TokenInterface wethContract = TokenInterface(wethAddr);
     ISoloMargin solo = ISoloMargin(soloAddr);
-
 }
 
 contract DydxFlashloaner is Setup, ICallee, DydxFlashloanBase, DSMath {
@@ -279,14 +279,14 @@ contract DydxFlashloaner is Setup, ICallee, DydxFlashloanBase, DSMath {
         require(sender == address(this), "not-same-sender");
         require(msg.sender == soloAddr, "not-solo-dydx-sender");
 
-        (AaveDataRaw memory _data, address dsa, uint ethAmt) = abi.decode(
+        (bytes memory callData, uint ethAmt) = abi.decode(
             data,
-            (AaveDataRaw, address, uint)
+            (bytes, uint)
         );
 
         wethContract.transfer(address(migrationAddr), ethAmt);
 
-        migrationAddr.migrateFlashCallback(_data, dsa, ethAmt);
+        Address.functionCall(address(migrationAddr), callData);
     }
 
     function initiateFlashLoan(bytes memory data, uint ethAmt) external {
@@ -302,6 +302,8 @@ contract DydxFlashloaner is Setup, ICallee, DydxFlashloanBase, DSMath {
         Account.Info[] memory accountInfos = new Account.Info[](1);
         accountInfos[0] = _getAccountInfo();
 
+        wethContract.approve(soloAddr, ethAmt + 2);
+        
         solo.operate(accountInfos, operations);
     }
 }
