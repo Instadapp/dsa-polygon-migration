@@ -10,6 +10,6 @@
         "InstaAaveV2MigratorReceiver": "0x4A090897f47993C2504144419751D6A91D79AbF4",
         "InstaMasterProxy": "0x697860CeE594c577F18f71cAf3d8B68D913c7366",
         "InstaPolygonTokenMapping": "0xa471D83e526B6b5D6c876088D34834B44D4064ff",
-        "InstaAaveV2MigratorReceiverImplementation": "0x9686CE6Ad5C3f7b212CAF401b928c4bB3422E7Ba"
+        "InstaAaveV2MigratorReceiverImplementation": "0xd7e8E6f5deCc5642B77a5dD0e445965B128a585D"
     }
 }
