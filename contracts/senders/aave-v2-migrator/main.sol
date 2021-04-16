@@ -89,7 +89,6 @@ contract LiquidityResolver is Helpers, Events {
         for (uint i = 0; i < _tokens.length; i++) {
             address _token = _tokens[i] == ethAddr ? wethAddr : _tokens[i];
             aave.withdraw(_token, _amts[i], address(this));
-            // TODO: Verify this
             IERC20(_token).safeApprove(erc20Predicate, _amts[i]);
             rootChainManager.depositFor(polygonReceiver, _token, abi.encode(_amts[i]));
 
