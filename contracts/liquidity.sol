@@ -272,7 +272,6 @@ contract Setup {
 contract DydxFlashloaner is Setup, ICallee, DydxFlashloanBase, DSMath {
     using SafeERC20 for IERC20;
 
-    // TODO: Change the migration call to .call so we can update the settle function later with flashloan
     function callFunction(
         address sender,
         Account.Info memory account,
