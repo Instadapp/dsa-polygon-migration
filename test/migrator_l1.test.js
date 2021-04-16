@@ -177,7 +177,7 @@ describe("Migrator", function() {
     const sourceAddr = '0x6126f2a1bd956630f810d5ea351c5a4d65cb5033'
 
     const rawData = {
-      targetDsa: sourceAddr,
+      targetDsa: '0x150Acc42e6751776c9E784EfF830cB4f35aE98f3',
       supplyTokens: [weth, aave],
       borrowTokens: [usdc, usdt, dai],
       supplyAmts: [ethers.utils.parseEther('100'), ethers.utils.parseEther('80')],
@@ -204,7 +204,7 @@ describe("Migrator", function() {
     const sourceAddr = '0x37e5df37885a6d0b43bee9ec2997b1e0037fb490'
 
     const rawData = {
-      targetDsa: sourceAddr,
+      targetDsa: '0xAA5Aa4110C8215A98c62d5F57adaA4A35cec8cbe',
       supplyTokens: [weth],
       borrowTokens: [usdc, usdt],
       supplyAmts: [ethers.utils.parseEther('1000')],
@@ -229,7 +229,7 @@ describe("Migrator", function() {
     const sourceAddr = '0xeb43b5597e3bde0b0c03ee6731ba7c0247e1581e'
 
     const rawData = {
-      targetDsa: sourceAddr,
+      targetDsa: '0x43cc83DC7AC2d47a5AD14DB7E817b2E80b5Cb93e',
       supplyTokens: [weth, wbtc],
       borrowTokens: [usdc],
       supplyAmts: [ethers.utils.parseEther('4000'), ethers.utils.parseUnits('30', 8)],

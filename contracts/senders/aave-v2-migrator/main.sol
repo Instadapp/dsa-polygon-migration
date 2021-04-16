@@ -7,6 +7,7 @@ import { TokenInterface } from "../../common/interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { AaveInterface, ATokenInterface, IndexInterface } from "./interfaces.sol";
 import { Events } from "./events.sol";
+import "hardhat/console.sol";
 
 contract LiquidityResolver is Helpers, Events {
     using SafeERC20 for IERC20;
@@ -156,6 +157,7 @@ contract MigrateResolver is LiquidityResolver {
         isPositionSafe();
 
         stateSender.syncState(polygonReceiver, abi.encode(data));
+        console.logBytes(abi.encode(data));
 
         emit LogAaveV2Migrate(
             sourceDsa,
