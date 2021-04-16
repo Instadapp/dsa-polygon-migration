@@ -99,6 +99,8 @@ contract AaveV2Migrator is MigrateResolver {
         address[] memory supplyTokens = data.supplyTokens;
         address[] memory borrowTokens = data.borrowTokens;
 
+        // TODO: before migrating make sure the new DSA is v2 DSA on L1.
+
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
 
         transferAtokens(aave, dsa, supplyTokens, supplyAmts);
