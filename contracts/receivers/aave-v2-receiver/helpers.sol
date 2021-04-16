@@ -114,21 +114,13 @@ abstract contract Helpers is Stores, DSMath, Variables {
             castData[0] = abi.encodeWithSignature("enableCollateral(address[])", supplyTokens);
                     
             for (uint j = 0; j < num; j++) {
-                uint skip = 0;
-                uint k = j * 2 + 1 + skip;
+                uint k = j * 2 + 1;
                 
                 if (i < num - 1) {
                     targets[k] = "AAVE-V2-A";
                     castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, splitAmt, 2, 0, 0);
                     targets[k+1] = "AAVE-V2-A";
                     castData[k+1] = abi.encodeWithSignature("deposit(address,uint256,uint256,uint256)", data.token, splitAmt, 0, 0);
-                    if (j == 0) {
-                        skip = 1;
-                        targets[k+1] = "AAVE-V2-A";
-                        address[] memory tokenArr = new address[](1);
-                        tokenArr[i] = data.token;
-                        castData[k+1] = abi.encodeWithSignature("enableCollateral(address[])", tokenArr);
-                    }
                 } else {
                     targets[k] = "AAVE-V2-A";
                     castData[k] = abi.encodeWithSignature("borrow(address,uint256,uint256,uint256,uint256)", data.token, finalSplit, 2, 0, 0);
