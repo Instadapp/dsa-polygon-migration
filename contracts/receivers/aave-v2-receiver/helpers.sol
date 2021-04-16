@@ -45,10 +45,6 @@ abstract contract Helpers is Stores, DSMath, Variables {
         return data;
     }
 
-    function getCollateralStatus(address token, address user) internal view returns (bool enabled) {
-        (uint bal, , , , , , , , bool isCol) = aaveData.getUserReserveData(token, user);
-        enabled = bal > 0 && !isCol;
-    }
 
     function isPositionSafe() internal view returns (bool isOk) {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
