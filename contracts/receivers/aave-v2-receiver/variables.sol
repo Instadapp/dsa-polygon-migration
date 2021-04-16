@@ -35,6 +35,6 @@ contract Variables {
     address[] public supportedTokens; // don't add maticAddr. Only add wmaticAddr?
 
     // Address which will receive L1 data and post it on L2
-    address public maticReceiver = address(0); // TODO: Change address
+    address public maticReceiver = 0x0000000000000000000000000000000000001001;
 
 }
