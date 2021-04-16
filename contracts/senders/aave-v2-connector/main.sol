@@ -56,6 +56,6 @@ contract AaveMigrateResolver is Helpers, Events {
 
 }
 
-contract AaveV2Migrator is AaveMigrateResolver {
-    string constant public name = "AaveV2PolygonMigrator-v1";
+contract ConnectV2AaveV2PolygonMigrator is AaveMigrateResolver {
+    string constant public name = "Aave-V2-Polygon-Migrator-v1";
 }
