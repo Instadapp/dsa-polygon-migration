@@ -35,10 +35,6 @@ interface AaveInterface {
         uint256 ltv,
         uint256 healthFactor
     );
-    function getConfiguration(address asset)
-        external
-        view
-        returns (ReserveConfigurationMap memory);
 }
 
 interface AaveLendingPoolProviderInterface {
