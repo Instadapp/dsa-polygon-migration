@@ -156,7 +156,6 @@ contract MigrateResolver is LiquidityResolver {
         isPositionSafe();
 
         stateSender.syncState(polygonReceiver, abi.encode(data));
-        console.logBytes(abi.encode(data));
 
         emit LogAaveV2Migrate(
             sourceDsa,
