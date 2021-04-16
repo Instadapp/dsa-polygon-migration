@@ -1,20 +1,6 @@
 pragma solidity >=0.7.0;
 pragma experimental ABIEncoderV2;
 
-struct ReserveConfigurationMap {
-    //bit 0-15: LTV
-    //bit 16-31: Liq. threshold
-    //bit 32-47: Liq. bonus
-    //bit 48-55: Decimals
-    //bit 56: Reserve is active
-    //bit 57: reserve is frozen
-    //bit 58: borrowing is enabled
-    //bit 59: stable rate borrowing enabled
-    //bit 60-63: reserved
-    //bit 64-79: reserve factor
-    uint256 data;
-}
-
 interface AaveInterface {
     function deposit(address _asset, uint256 _amount, address _onBehalfOf, uint16 _referralCode) external;
     function withdraw(address _asset, uint256 _amount, address _to) external;
