@@ -252,18 +252,17 @@ describe("Migrator", function() {
     const receipt = await tx.wait()
   })
 
-  // it("test settle 3", async function() {
-  //   const tokens = [usdc, usdt, weth, wbtc]
-  //   const amts = [
-  //     ethers.utils.parseUnits('500000', 6),
-  //     ethers.utils.parseUnits('40000', 6),
-  //     ethers.utils.parseEther('1000'),
-  //     ethers.utils.parseUnits('25', 8)
-  //   ]
+  it("test settle 3", async function() {
+    const tokens = [weth, wbtc, aave]
+    const amts = [
+      ethers.utils.parseEther('2000'),
+      ethers.utils.parseUnits('25', 8),
+      ethers.utils.parseEther('80')
+    ]
 
-  //   const tx = await migrator.settle(tokens, amts)
-  //   const receipt = await tx.wait()
+    const tx = await migrator.settle(tokens, amts)
+    const receipt = await tx.wait()
 
-  //   // console.log(receipt)
-  // })
+    // console.log(receipt)
+  })
 })
