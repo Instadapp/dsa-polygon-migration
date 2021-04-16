@@ -15,8 +15,7 @@ import {
     ATokenInterface,
     StateSenderInterface,
     AavePriceOracle,
-    ChainLinkInterface,
-    ReserveConfigurationMap
+    ChainLinkInterface
 } from "./interfaces.sol";
 
 abstract contract Helpers is DSMath, Stores, Variables {

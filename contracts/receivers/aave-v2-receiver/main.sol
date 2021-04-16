@@ -87,8 +87,6 @@ contract MigrateResolver is Helpers, Events {
 contract AaveV2Migrator is MigrateResolver {
     using SafeERC20 for IERC20;
 
-    uint private lastStateId;
-
     function _migratePosition(AaveData memory _data) internal {
         AaveData memory data = remapTokens(_data); // converting L1 token addresses to L2 addresses
 
