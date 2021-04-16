@@ -51,8 +51,7 @@ contract MigrateResolver is Helpers, Events {
         AaveInterface aave = AaveInterface(aaveProvider.getLendingPool());
         for (uint i = 0; i < supportedTokens.length; i++) {
             address _token = supportedTokens[i];
-            if (_token == maticAddr) {
-                _token = wmaticAddr;
+            if (_token == wmaticAddr) {
                 if (address(this).balance > 0) {
                     TokenInterface(wmaticAddr).deposit{value: address(this).balance}();
                 }
