@@ -2,13 +2,10 @@ pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
 import { Variables } from "./variables.sol";
-import "hardhat/console.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 
 /**
- * @title InstaAccountV2.
- * @dev DeFi Smart Account Wallet.
+ * @title InstaAccountV2 Implementation-M2.
+ * @dev DeFi Smart Account Wallet for polygon migration.
  */
 
 interface ConnectorsInterface {
@@ -19,19 +16,12 @@ contract Constants is Variables {
     // InstaIndex Address.
     address internal constant instaIndex = 0xA9B99766E6C676Cf1975c0D3166F96C0848fF5ad;
     // Migration contract Address.
-    address internal immutable migrationContract;
+    address internal constant migrationContract = 0x4A090897f47993C2504144419751D6A91D79AbF4;
     // Connnectors Address.
-    address public immutable connectorsM1;
-
-    constructor(address _connectors, address _migration) {
-        connectorsM1 = _connectors;
-        migrationContract = _migration;
-    }
+    address public constant connectorsM1 = 0x0a0a82D2F86b9E46AE60E22FCE4e8b916F858Ddc;
 }
 
-contract InstaImplementationM1 is Constants {
-
-    constructor(address _connectors, address _migration) Constants(_connectors, _migration) {}
+contract InstaImplementationM2 is Constants {
 
     function decodeEvent(bytes memory response) internal pure returns (string memory _eventCode, bytes memory _eventParams) {
         if (response.length > 0) {
@@ -92,9 +82,9 @@ contract InstaImplementationM1 is Constants {
     returns (bytes32) // Dummy return to fix instaIndex buildWithCast function
     {   
         uint256 _length = _targetNames.length;
-        require(_auth[msg.sender] || msg.sender == instaIndex || msg.sender == migrationContract, "1: permission-denied");
-        require(_length != 0, "1: length-invalid");
-        require(_length == _datas.length , "1: array-length-invalid");
+        require(msg.sender == migrationContract, "2: permission-denied");
+        require(_length != 0, "2: length-invalid");
+        require(_length == _datas.length , "2: array-length-invalid");
 
         string[] memory eventNames = new string[](_length);
         bytes[] memory eventParams = new bytes[](_length);
@@ -102,7 +92,7 @@ contract InstaImplementationM1 is Constants {
         // TODO: restrict migration contract to run something specific? or give is all access as it doesn't have power to run anything else
         (bool isOk, address[] memory _targets) = ConnectorsInterface(connectorsM1).isConnectors(_targetNames);
 
-        require(isOk, "1: not-connector");
+        require(isOk, "2: not-connector");
 
         for (uint i = 0; i < _length; i++) {
             bytes memory response = spell(_targets[i], _datas[i]);
