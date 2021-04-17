@@ -45,8 +45,10 @@ describe("Migrator", function() {
     accounts = await ethers.getSigners();
     master = ethers.provider.getSigner(masterAddress)
 
-    migrator = await deployContract(master, Migrator, [])
-    instapool = await deployContract(master, InstaPool, [])
+    // migrator = await deployContract(master, Migrator, [])
+    migrator = new ethers.Contract('0x3cD0727d7bbBb6A5EADBDC72349370a7eB599301', Migrator.abi, master)
+    // instapool = await deployContract(master, InstaPool, [])
+    instapool = new ethers.Contract('0xd7e8E6f5deCc5642B77a5dD0e445965B128a585D', InstaPool.abi, master)
 
     console.log("Migrator deployed: ", migrator.address)
     console.log("Instapool deployed: ", instapool.address)
