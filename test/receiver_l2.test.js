@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { ethers, network, waffle } = hre;
 const { provider, deployContract } = waffle
 
-const Migrator = require("../artifacts/contracts/receivers/aave-v2-receiver/main.sol/AaveV2Migrator.json")
+const Migrator = require("../artifacts/contracts/receivers/aave-v2-receiver/main.sol/InstaAaveV2MigratorReceiverImplementation.json")
 const TokenMappingContract = require("../artifacts/contracts/receivers/mapping/main.sol/InstaPolygonTokenMapping.json")
 const Implementations_m2Contract = require("../artifacts/contracts/implementation/aave-v2-migrator/main.sol/InstaImplementationM1.json")
 
