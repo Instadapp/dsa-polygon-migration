@@ -33,7 +33,7 @@ module.exports = {
     hardhat: { // matic forking
       forking: {
         url: `https://cold-red-river.matic.quiknode.pro/${QUIKNODE_ID}/`,
-        blockNumber: 13382059,
+        blockNumber: 13418393,
       },
       blockGasLimit: 12000000,
     },

@@ -6,6 +6,7 @@ const { provider, deployContract } = waffle
 const Migrator = require("../artifacts/contracts/receivers/aave-v2-receiver/main.sol/InstaAaveV2MigratorReceiverImplementation.json")
 const TokenMappingContract = require("../artifacts/contracts/receivers/mapping/main.sol/InstaPolygonTokenMapping.json")
 const Implementations_m2Contract = require("../artifacts/contracts/implementation/aave-v2-migrator/main.sol/InstaImplementationM1.json")
+const Funder = require("../artifacts/contracts/mock/funder.sol/Funder.json");
 
 const tokenMaps = {
   // polygon address : main net address
@@ -30,7 +31,9 @@ describe("Migrator", function() {
   ]
 
   const instaImplementationABI = [
-    "function addImplementation(address _implementation, bytes4[] calldata _sigs)"
+    "function addImplementation(address _implementation, bytes4[] calldata _sigs)",
+    "function getImplementation(bytes4 _sig) view returns (address)",
+    "function removeImplementation(address _implementation)"
   ]
 
   const implementations_m2Sigs = ["0x5a19a5eb"]
@@ -76,21 +79,16 @@ describe("Migrator", function() {
     migrator = new ethers.Contract('0xd7e8E6f5deCc5642B77a5dD0e445965B128a585D', Migrator.abi, master)
     
     // tokenMapping = await deployContract(master, TokenMappingContract, [Object.values(tokenMaps), Object.keys(tokenMaps)])
-    tokenMapping = new ethers.Contract('0xa471D83e526B6b5D6c876088D34834B44D4064ff', TokenMappingContract.abi, master)
+    // tokenMapping = new ethers.Contract('0xa471D83e526B6b5D6c876088D34834B44D4064ff', TokenMappingContract.abi, master)
     implementations_m2Contract = await deployContract(master, Implementations_m2Contract, [instaConnectorsV2, migrator.address])
     
     console.log("Migrator deployed: ", migrator.address)
-    console.log("tokenMapping deployed: ", tokenMapping.address)
-    console.log("implementations_m2Contract deployed: ", implementations_m2Contract.address)
+    // console.log("tokenMapping deployed: ", tokenMapping.address)
+    // console.log("implementations_m2Contract deployed: ", implementations_m2Contract.address)
     
     await master.sendTransaction({
       to: migrator.address,
-      value: ethers.utils.parseEther("45499999")
-    });
-
-    await master.sendTransaction({
-      to: receiverMsgSender,
-      value: ethers.utils.parseEther("1")
+      value: ethers.utils.parseEther("45499998")
     });
     ethereum = network.provider
   })
@@ -98,15 +96,121 @@ describe("Migrator", function() {
   it("should set implementationsV2", async function() {
 
     const instaImplementationsContract = new ethers.Contract(instaImplementations, instaImplementationABI, master)
+    await instaImplementationsContract.connect(master).removeImplementation('0xEAac5739eB532110431b14D01017506DBA8f7b07')
     await instaImplementationsContract.connect(master).addImplementation(implementations_m2Contract.address, implementations_m2Sigs)
   })
 
   it("should set tokens", async function() {
-    const tx = await migrator.connect(master).addTokenSupport([...Object.keys(tokenMaps).slice(1, 3), "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"])
+    const tx = await migrator.connect(master).addTokenSupport([...Object.keys(tokenMaps)])
     const receipt = await tx.wait()
 
-    const isMatic = await migrator.isSupportedToken("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE")
-    expect(isMatic).to.be.true;
+    // const isMatic = await migrator.isSupportedToken("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE")
+    // expect(isMatic).to.be.true;
+  })
+
+  it("fund receiver data setter", async function() {
+    const funder = await deployContract(master, Funder, [])
+    await master.sendTransaction({
+      to: funder.address,
+      value: ethers.utils.parseEther("1")
+    });
+    await funder.kill()
+  })
+
+  it("fund assets", async function() {
+    // const usdcHolderAddr = '0x986a2fCa9eDa0e06fBf7839B89BfC006eE2a23Dd' // 1,000,000
+    // await accounts[0].sendTransaction({ to: usdcHolderAddr, value: ethers.utils.parseEther('1') })
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ usdcHolderAddr ]
+    // })
+    // const usdcHolder = ethers.provider.getSigner(usdcHolderAddr)
+    // const usdcContract = new ethers.Contract(usdc, erc20Abi, usdcHolder)
+    // await usdcContract.transfer(migrator.address, ethers.utils.parseUnits('1000000', 6))
+
+    // const usdtHolderAddr = '0x6A4c4695428d1BB3FAC49614dFCF390BC78FacFE' // 500,000
+    // await accounts[0].sendTransaction({ to: usdtHolderAddr, value: ethers.utils.parseEther('1') })
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ usdtHolderAddr ]
+    // })
+    // const usdtHolder = ethers.provider.getSigner(usdtHolderAddr)
+    // const usdtContract = new ethers.Contract(usdt, erc20Abi, usdtHolder)
+    // await usdtContract.transfer(migrator.address, ethers.utils.parseUnits('500000', 6))
+
+    // const daiHolderAddr = '0x7A61A0Ed364E599Ae4748D1EbE74bf236Dd27B09' // 300,000
+    // await accounts[0].sendTransaction({ to: daiHolderAddr, value: ethers.utils.parseEther('1') })
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ daiHolderAddr ]
+    // })
+    // const daiHolder = ethers.provider.getSigner(daiHolderAddr)
+    // const daiContract = new ethers.Contract(dai, erc20Abi, daiHolder)
+    // await daiContract.transfer(migrator.address, ethers.utils.parseUnits('300000', 18))
+
+    // const wbtcHolderAddr = '0x4572581Fc62D4477B9E11bb65eA8a1c306CbBa3D' // 1
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ wbtcHolderAddr ]
+    // })
+    // const wbtcHolder = ethers.provider.getSigner(wbtcHolderAddr)
+    // const wbtcContract = new ethers.Contract(wbtc, erc20Abi, wbtcHolder)
+    // await wbtcContract.transfer(migrator.address, ethers.utils.parseUnits('0.5', 8))
+
+    // let wethHolderAddr = '0xac1513a6C4C3E74Cb0c1f77c8cBbbf22A2400e33' // 150
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ wethHolderAddr ]
+    // })
+    // let wethHolder = ethers.provider.getSigner(wethHolderAddr)
+    // let wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
+    // await wethContract.transfer(migrator.address, ethers.utils.parseUnits('150', 18))
+
+    // wethHolderAddr = '0xBe31a54c78f6E73819ffF78072Be1660485c8105' // 130
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ wethHolderAddr ]
+    // })
+    // wethHolder = ethers.provider.getSigner(wethHolderAddr)
+    // wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
+    // await wethContract.transfer(migrator.address, ethers.utils.parseUnits('130', 18))
+
+    // wethHolderAddr = '0x10752de2972390BA3D5A47A26179E526019C01c0' // 100
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ wethHolderAddr ]
+    // })
+    // wethHolder = ethers.provider.getSigner(wethHolderAddr)
+    // wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
+    // await wethContract.transfer(migrator.address, ethers.utils.parseUnits('100', 18))
+
+    // wethHolderAddr = '0x0ee5CDBec0665D31ee00EE35b46e85EdcB9CEb31' // 100
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ wethHolderAddr ]
+    // })
+    // wethHolder = ethers.provider.getSigner(wethHolderAddr)
+    // wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
+    // await wethContract.transfer(migrator.address, ethers.utils.parseUnits('100', 18))
+
+    // wethHolderAddr = '0xE3f892174190b3F0Fa502Eb84c8208c7c0998c50' // 90
+    // await hre.network.provider.request({
+    //   method: "hardhat_impersonateAccount",
+    //   params: [ wethHolderAddr ]
+    // })
+    // wethHolder = ethers.provider.getSigner(wethHolderAddr)
+    // wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
+    // await wethContract.transfer(migrator.address, ethers.utils.parseUnits('100', 18))
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ wmatic ]
+    })
+    const wmaticSigner = ethers.provider.getSigner(wmatic)
+    await wmaticSigner.sendTransaction({
+      to: migrator.address,
+      value: ethers.utils.parseEther("200000000")
+    });
   })
 
   it("should set data", async function() {
@@ -133,102 +237,6 @@ describe("Migrator", function() {
     const receipt = await tx.wait()
 
     // console.log(receipt)
-  })
-
-  it("fund assets", async function() {
-    const usdcHolderAddr = '0x986a2fCa9eDa0e06fBf7839B89BfC006eE2a23Dd' // 1,000,000
-    await accounts[0].sendTransaction({ to: usdcHolderAddr, value: ethers.utils.parseEther('1') })
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ usdcHolderAddr ]
-    })
-    const usdcHolder = ethers.provider.getSigner(usdcHolderAddr)
-    const usdcContract = new ethers.Contract(usdc, erc20Abi, usdcHolder)
-    await usdcContract.transfer(migrator.address, ethers.utils.parseUnits('1000000', 6))
-
-    const usdtHolderAddr = '0xe67e43b831A541c5Fa40DE52aB0aFbE311514E64' // 500,000
-    await accounts[0].sendTransaction({ to: usdtHolderAddr, value: ethers.utils.parseEther('1') })
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ usdtHolderAddr ]
-    })
-    const usdtHolder = ethers.provider.getSigner(usdtHolderAddr)
-    const usdtContract = new ethers.Contract(usdt, erc20Abi, usdtHolder)
-    await usdtContract.transfer(migrator.address, ethers.utils.parseUnits('500000', 6))
-
-    const daiHolderAddr = '0x7A61A0Ed364E599Ae4748D1EbE74bf236Dd27B09' // 300,000
-    await accounts[0].sendTransaction({ to: daiHolderAddr, value: ethers.utils.parseEther('1') })
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ daiHolderAddr ]
-    })
-    const daiHolder = ethers.provider.getSigner(daiHolderAddr)
-    const daiContract = new ethers.Contract(dai, erc20Abi, daiHolder)
-    await daiContract.transfer(migrator.address, ethers.utils.parseUnits('300000', 18))
-
-    // const wbtcHolderAddr = '0x4572581Fc62D4477B9E11bb65eA8a1c306CbBa3D' // 1
-    // await hre.network.provider.request({
-    //   method: "hardhat_impersonateAccount",
-    //   params: [ wbtcHolderAddr ]
-    // })
-    // const wbtcHolder = ethers.provider.getSigner(wbtcHolderAddr)
-    // const wbtcContract = new ethers.Contract(wbtc, erc20Abi, wbtcHolder)
-    // await wbtcContract.transfer(migrator.address, ethers.utils.parseUnits('0.5', 8))
-
-    let wethHolderAddr = '0xac1513a6C4C3E74Cb0c1f77c8cBbbf22A2400e33' // 150
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ wethHolderAddr ]
-    })
-    let wethHolder = ethers.provider.getSigner(wethHolderAddr)
-    let wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
-    await wethContract.transfer(migrator.address, ethers.utils.parseUnits('150', 18))
-
-    wethHolderAddr = '0xBe31a54c78f6E73819ffF78072Be1660485c8105' // 130
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ wethHolderAddr ]
-    })
-    wethHolder = ethers.provider.getSigner(wethHolderAddr)
-    wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
-    await wethContract.transfer(migrator.address, ethers.utils.parseUnits('130', 18))
-
-    wethHolderAddr = '0x10752de2972390BA3D5A47A26179E526019C01c0' // 100
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ wethHolderAddr ]
-    })
-    wethHolder = ethers.provider.getSigner(wethHolderAddr)
-    wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
-    await wethContract.transfer(migrator.address, ethers.utils.parseUnits('100', 18))
-
-    wethHolderAddr = '0x0ee5CDBec0665D31ee00EE35b46e85EdcB9CEb31' // 100
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ wethHolderAddr ]
-    })
-    wethHolder = ethers.provider.getSigner(wethHolderAddr)
-    wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
-    await wethContract.transfer(migrator.address, ethers.utils.parseUnits('100', 18))
-
-    wethHolderAddr = '0xE3f892174190b3F0Fa502Eb84c8208c7c0998c50' // 90
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ wethHolderAddr ]
-    })
-    wethHolder = ethers.provider.getSigner(wethHolderAddr)
-    wethContract = new ethers.Contract(weth, erc20Abi, wethHolder)
-    await wethContract.transfer(migrator.address, ethers.utils.parseUnits('100', 18))
-
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ wmatic ]
-    })
-    const wmaticSigner = ethers.provider.getSigner(wmatic)
-    await wmaticSigner.sendTransaction({
-      to: migrator.address,
-      value: ethers.utils.parseEther("50000000")
-    });
   })
 
   it("test settle 2", async function() {
