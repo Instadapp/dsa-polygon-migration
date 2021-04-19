@@ -25,4 +25,6 @@ contract Events {
         uint256 indexed stateId,
         bytes data
     );
+
+    event LogMigrate(uint _id);
 }

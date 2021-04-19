@@ -136,6 +136,8 @@ contract InstaAaveV2MigratorReceiverImplementation is AaveV2Migrator {
         _migratePosition(data);
 
         delete positions[_id];
+
+        emit LogMigrate(_id);
     }
 
     receive() external payable {}
