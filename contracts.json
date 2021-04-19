@@ -10,7 +10,7 @@
         "InstaAaveV2MigratorReceiver": "0x4A090897f47993C2504144419751D6A91D79AbF4",
         "InstaMasterProxy": "0x697860CeE594c577F18f71cAf3d8B68D913c7366",
         "InstaPolygonTokenMapping": "0xa471D83e526B6b5D6c876088D34834B44D4064ff",
-        "InstaAaveV2MigratorReceiverImplementation": "0xd7e8E6f5deCc5642B77a5dD0e445965B128a585D",
+        "InstaAaveV2MigratorReceiverImplementation": "0xFB8a92E017E3416c0F63c28C53195337eBDeba2E",
         "InstaImplementationM2": "0xEAac5739eB532110431b14D01017506DBA8f7b07"
     }
 }
