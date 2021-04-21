@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TokenInterface } from "../../common/interfaces.sol";
-import { AccountInterface, AaveData, AaveInterface, IndexInterface } from "./interfaces.sol";
+import { AccountInterface, AaveData, AaveInterface, IndexInterface, WETHTokenInterface } from "./interfaces.sol";
 import { Events } from "./events.sol";
 import { Helpers } from "./helpers.sol";
 
@@ -56,6 +56,14 @@ contract MigrateResolver is Helpers, Events {
                     TokenInterface(wmaticAddr).deposit{value: address(this).balance}();
                 }
             }
+
+            if (_token == wethAddr) {
+                TokenInterface wethPosContract = TokenInterface(wethPosAddr);
+                if (wethPosContract.balanceOf(address(this)) > 0) {
+                    WETHTokenInterface(wethAddr).deposit(address(this), abi.encode(wethPosContract.balanceOf(address(this))));
+                }
+            }
+
             IERC20 _tokenContract = IERC20(_token);
             uint _tokenBal = _tokenContract.balanceOf(address(this));
             if (_tokenBal > 0) {
@@ -108,7 +116,7 @@ contract AaveV2Migrator is MigrateResolver {
 
         isPositionSafe();
 
-        emit LogAaveV2Migrate(dsa, supplyTokens, borrowTokens, supplyAmts, supplyAmts);
+        emit LogAaveV2Migrate(dsa, supplyTokens, borrowTokens, supplyAmts, borrowAmts);
     }
 
     function onStateReceive(uint256 stateId, bytes calldata receivedData) external {

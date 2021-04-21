@@ -36,11 +36,21 @@ contract Variables {
      */
     InstaListInterface public constant instaList = InstaListInterface(0x839c2D3aDe63DF5b0b8F3E57D5e145057Ab41556);
 
-
     /**
      * @dev Matic StateReceiver contract
      */
     address public constant maticReceiver = 0x0000000000000000000000000000000000001001;
+
+    /**
+     * @dev WETH POS address
+     */
+    address public constant wethPosAddr = 0xAe740d42E4ff0C5086b2b5b5d149eB2F9e1A754F;
+
+    /**
+     * @dev WETH address
+     */
+    address public constant wethAddr = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
+
 
 
     // Storage variables //
