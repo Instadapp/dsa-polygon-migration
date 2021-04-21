@@ -89,7 +89,7 @@ contract LiquidityResolver is Helpers, Events {
             address _token = _tokens[i] == ethAddr ? wethAddr : _tokens[i];
             aave.withdraw(_token, _amts[i], address(this));
 
-            if (_tokens[i] == ethAddr) {
+            if (_token == wethAddr) {
                 TokenInterface wethContract = TokenInterface(wethAddr);
                 uint wethBal = wethContract.balanceOf(address(this));
                 wethContract.approve(wethAddr, wethBal);
