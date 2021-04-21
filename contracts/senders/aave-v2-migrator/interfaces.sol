@@ -106,4 +106,5 @@ interface ChainLinkInterface {
 
 interface RootChainManagerInterface {
     function depositFor(address user, address token, bytes calldata depositData) external;
+    function depositEtherFor(address user) external payable;
 }

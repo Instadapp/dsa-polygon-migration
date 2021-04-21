@@ -36,7 +36,6 @@ contract Variables {
      */
     InstaListInterface public constant instaList = InstaListInterface(0x839c2D3aDe63DF5b0b8F3E57D5e145057Ab41556);
 
-
     /**
      * @dev Matic StateReceiver contract
      */

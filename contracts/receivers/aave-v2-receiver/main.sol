@@ -56,6 +56,7 @@ contract MigrateResolver is Helpers, Events {
                     TokenInterface(wmaticAddr).deposit{value: address(this).balance}();
                 }
             }
+
             IERC20 _tokenContract = IERC20(_token);
             uint _tokenBal = _tokenContract.balanceOf(address(this));
             if (_tokenBal > 0) {
@@ -108,7 +109,7 @@ contract AaveV2Migrator is MigrateResolver {
 
         isPositionSafe();
 
-        emit LogAaveV2Migrate(dsa, supplyTokens, borrowTokens, supplyAmts, supplyAmts);
+        emit LogAaveV2Migrate(dsa, supplyTokens, borrowTokens, supplyAmts, borrowAmts);
     }
 
     function onStateReceive(uint256 stateId, bytes calldata receivedData) external {
