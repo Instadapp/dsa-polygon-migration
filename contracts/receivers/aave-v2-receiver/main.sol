@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TokenInterface } from "../../common/interfaces.sol";
-import { AccountInterface, AaveData, AaveInterface, IndexInterface, WETHTokenInterface } from "./interfaces.sol";
+import { AccountInterface, AaveData, AaveInterface, IndexInterface } from "./interfaces.sol";
 import { Events } from "./events.sol";
 import { Helpers } from "./helpers.sol";
 
@@ -54,13 +54,6 @@ contract MigrateResolver is Helpers, Events {
             if (_token == wmaticAddr) {
                 if (address(this).balance > 0) {
                     TokenInterface(wmaticAddr).deposit{value: address(this).balance}();
-                }
-            }
-
-            if (_token == wethAddr) {
-                TokenInterface wethPosContract = TokenInterface(wethPosAddr);
-                if (wethPosContract.balanceOf(address(this)) > 0) {
-                    WETHTokenInterface(wethAddr).deposit(address(this), abi.encode(wethPosContract.balanceOf(address(this))));
                 }
             }
 

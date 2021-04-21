@@ -101,8 +101,3 @@ interface AaveInterface {
 interface InstaListInterface {
     function accountID(address) external view returns (uint);
 }
-
-
-interface WETHTokenInterface {
-    function deposit(address user, bytes memory depositData) external payable;
-}
