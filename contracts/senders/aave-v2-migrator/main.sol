@@ -89,7 +89,15 @@ contract LiquidityResolver is Helpers, Events {
             address _token = _tokens[i] == ethAddr ? wethAddr : _tokens[i];
             aave.withdraw(_token, _amts[i], address(this));
             IERC20(_token).safeApprove(erc20Predicate, _amts[i]);
-            rootChainManager.depositFor(polygonReceiver, _token, abi.encode(_amts[i]));
+
+            if (_tokens[i] == ethAddr) {
+                TokenInterface wethContract = TokenInterface(wethAddr);
+                uint wethBal = wethContract.balanceOf(address(this));
+                wethContract.approve(wethAddr, wethBal);
+                wethContract.withdraw(wethBal);
+            }
+
+            rootChainManager.depositFor(polygonReceiver, _tokens[i], abi.encode(_amts[i]));
 
             isPositionSafe();
         }
