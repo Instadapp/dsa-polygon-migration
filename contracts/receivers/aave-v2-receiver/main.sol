@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TokenInterface } from "../../common/interfaces.sol";
-import { AccountInterface, AaveData, AaveInterface, IndexInterface } from "./interfaces.sol";
+import { AccountInterface, AaveData, AaveInterface, IndexInterface, CastData, DSAInterface } from "./interfaces.sol";
 import { Events } from "./events.sol";
 import { Helpers } from "./helpers.sol";
 
@@ -124,6 +124,50 @@ contract AaveV2Migrator is MigrateResolver {
 
         emit LogStateSync(stateId, receivedData);
     }
+}
+
+contract InstaFlash is AaveV2Migrator {
+
+    using SafeERC20 for IERC20;
+
+    /**
+     * FOR SECURITY PURPOSE
+     * only Smart DEFI Account can access the liquidity pool contract
+     */
+    modifier isDSA {
+        uint64 id = instaList.accountID(msg.sender);
+        require(id != 0, "not-dsa-id");
+        _;
+    }
+
+    function initiateFlashLoan(
+        address[] calldata _tokens,	
+        uint256[] calldata _amounts,	
+        uint _route, // no use of route but just to follow current flashloan pattern
+        bytes calldata data
+    ) external isDSA {	
+        uint _length = _tokens.length;
+        require(_length == _amounts.length, "not-equal-length");
+        uint[] memory iniBal = new uint[](_length);
+        IERC20[] memory _tokenContracts = new IERC20[](_length);
+        for (uint i = 0; i < _length; i++) {
+            _tokenContracts[i] = IERC20(_tokens[i]);
+            iniBal[i] = _tokenContracts[i].balanceOf(address(this));
+            _tokenContracts[i].safeTransfer(msg.sender, _amounts[i]);
+        }
+        CastData memory cd;
+        (cd.dsa, cd.route, cd.tokens, cd.amounts, cd.dsaTargets, cd.dsaData) = abi.decode(
+            data,
+            (address, uint256, address[], uint256[], address[], bytes[])
+        );
+        DSAInterface(msg.sender).cast(cd.dsaTargets, cd.dsaData, 0xB7fA44c2E964B6EB24893f7082Ecc08c8d0c0F87);
+        for (uint i = 0; i < _length; i++) {
+            uint _finBal = _tokenContracts[i].balanceOf(address(this));
+            require(_finBal >= iniBal[i], "flashloan-not-returned");
+        }
+        // TODO: emit event
+    }
+
 }
 
 contract InstaAaveV2MigratorReceiverImplementation is AaveV2Migrator {
