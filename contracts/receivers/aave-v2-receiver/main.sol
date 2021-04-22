@@ -143,7 +143,7 @@ contract InstaFlash is AaveV2Migrator {
     function initiateFlashLoan(
         address[] calldata _tokens,	
         uint256[] calldata _amounts,	
-        uint _route, // no use of route but just to follow current flashloan pattern
+        uint /*_route */, // no use of route but just to follow current flashloan pattern
         bytes calldata data
     ) external isDSA {	
         uint _length = _tokens.length;
