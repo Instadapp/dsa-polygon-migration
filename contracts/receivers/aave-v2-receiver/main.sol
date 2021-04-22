@@ -160,12 +160,19 @@ contract InstaFlash is AaveV2Migrator {
             data,
             (address, uint256, address[], uint256[], string[], bytes[])
         );
-        DSAInterface(msg.sender).cast(cd.dsaTargets, cd.dsaData, 0xB7fA44c2E964B6EB24893f7082Ecc08c8d0c0F87);
+        DSAInterface(msg.sender).castMigrate(cd.dsaTargets, cd.dsaData, 0xB7fA44c2E964B6EB24893f7082Ecc08c8d0c0F87);
         for (uint i = 0; i < _length; i++) {
             uint _finBal = _tokenContracts[i].balanceOf(address(this));
             require(_finBal >= iniBal[i], "flashloan-not-returned");
         }
-        // TODO: emit event
+        uint[] memory _feeAmts = new uint[](_length);
+        emit LogFlashLoan(
+            msg.sender,
+            _tokens,
+            _amounts,
+            _feeAmts,
+            0
+        );
     }
 
 }

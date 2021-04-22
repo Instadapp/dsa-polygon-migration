@@ -112,5 +112,5 @@ interface InstaListInterface {
 }
 
 interface DSAInterface {
-    function cast(address[] calldata _targets, bytes[] calldata _datas, address _origin) external payable returns (bytes32);
+    function castMigrate(string[] calldata _targets, bytes[] calldata _datas, address _origin) external payable returns (bytes32);
 }
