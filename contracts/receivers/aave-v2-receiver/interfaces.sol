@@ -30,7 +30,7 @@ struct CastData {
     uint route;
     address[] tokens;
     uint[] amounts;
-    address[] dsaTargets;
+    string[] dsaTargets;
     bytes[] dsaData;
 }
 
