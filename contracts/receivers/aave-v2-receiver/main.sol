@@ -177,7 +177,7 @@ contract InstaFlash is AaveV2Migrator {
 
 }
 
-contract InstaAaveV2MigratorReceiverImplementation is AaveV2Migrator {
+contract InstaAaveV2MigratorReceiverImplementation is InstaFlash {
     function migrate(uint _id) external {
         bytes memory _data = positions[_id];
 
