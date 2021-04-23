@@ -113,6 +113,24 @@ describe("Receiver", function() {
     await instaImplementationsContract.connect(master).addImplementation(implementation.address, implementations_m2Sigs)
   })
 
+  it("Should not flashloan non-dsa address", async function() {
+    const eoaAddr = '0xA35f3FEFEcb5160327d1B6A210b60D1e1d7968e3'
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ eoaAddr ]
+    })
+
+    const eoaSigner = ethers.provider.getSigner(eoaAddr)
+
+    await expect(receiver.connect(eoaSigner).initiateFlashLoan(
+      [usdc],
+      [ethers.utils.parseUnits('1000', 6)],
+      0,
+      '0x'
+    )).to.be.revertedWith('not-dsa-id')
+  })
+
   it("single token flashloan", async function() {
     const dsaAddr = '0x150Acc42e6751776c9E784EfF830cB4f35aE98f3'
 
