@@ -66,6 +66,16 @@ describe("Receiver", function() {
     const usdcHolder = ethers.provider.getSigner(usdcHolderAddr)
     const usdcContract = new ethers.Contract(usdc, erc20Abi, usdcHolder)
     await usdcContract.transfer(receiver.address, ethers.utils.parseUnits('1000000', 6))
+
+    const daiHolderAddr = '0x7A61A0Ed364E599Ae4748D1EbE74bf236Dd27B09' // 300,000
+    await accounts[0].sendTransaction({ to: daiHolderAddr, value: ethers.utils.parseEther('1') })
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ daiHolderAddr ]
+    })
+    const daiHolder = ethers.provider.getSigner(daiHolderAddr)
+    const daiContract = new ethers.Contract(dai, erc20Abi, daiHolder)
+    await daiContract.transfer(receiver.address, ethers.utils.parseUnits('10000', 18))
   })
 
   // it("should change the implementation", async function() {
@@ -147,17 +157,58 @@ describe("Receiver", function() {
       [ethers.utils.parseUnits('1000', 6)],
       0,
       abiData
-      // {
-      //   dsa: dsaAddr,
-      //   route: 0,
-      //   tokens: [usdc],
-      //   amounts: [ethers.utils.parseUnits('1000', 6)],
-      //   dsaTargets: ['AAVE-V2-A', 'AAVE-V2-A'],
-      //   dsaData: [
-      //     aave.encodeFunctionData('deposit', (usdc, ethers.utils.parseUnits('1000', 6), 0, 0)),
-      //     aave.encodeFunctionData('withdraw', (usdc, ethers.utils.parseUnits('1000', 6), 0, 0))
-      //   ]
-      // }
+    )
+
+    await tx.wait()
+  })
+
+  it("multi token flashloan", async function() {
+    const dsaAddr = '0x150Acc42e6751776c9E784EfF830cB4f35aE98f3'
+
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ dsaAddr ]
+    })
+
+    const dsaSigner = ethers.provider.getSigner(dsaAddr)
+
+    const aave = new ethers.utils.Interface([
+      'function deposit(address,uint256,uint256,uint256)',
+      'function withdraw(address,uint256,uint256,uint256)'
+    ])
+
+    const basic = new ethers.utils.Interface([
+      'function withdraw(address,uint256,address,uint256,uint256)'
+    ])
+
+    const abiCoder = ethers.utils.defaultAbiCoder
+
+    const abiData = abiCoder.encode(
+      ['address', 'uint256', 'address[]', 'uint256[]', 'string[]', 'bytes[]'],
+      [
+        dsaAddr,
+        0,
+        [usdc, dai],
+        [ethers.utils.parseUnits('1000', 6), ethers.utils.parseEther('5000')],
+        ['AAVE-V2-A', 'AAVE-V2-A', 'AAVE-V2-A', 'AAVE-V2-A', 'BASIC-A', 'BASIC-A'],
+        [
+          aave.encodeFunctionData('deposit', [usdc, ethers.utils.parseUnits('1000', 6), 0, 0]),
+          aave.encodeFunctionData('deposit', [dai, ethers.utils.parseEther('5000'), 0, 0]),
+          aave.encodeFunctionData('withdraw', [usdc, ethers.utils.parseUnits('1000', 6), 0, 0]),
+          aave.encodeFunctionData('withdraw', [dai, ethers.utils.parseEther('5000'), 0, 0]),
+          basic.encodeFunctionData('withdraw', [usdc, ethers.utils.parseUnits('1000', 6), receiver.address, 0, 0]),
+          basic.encodeFunctionData('withdraw', [dai, ethers.utils.parseEther('5000'), receiver.address, 0, 0])
+        ]
+      ]
+    )
+
+    // console.log('abiData', abiData)
+
+    const tx = await receiver.connect(dsaSigner).initiateFlashLoan(
+      [usdc, dai],
+      [ethers.utils.parseUnits('1000', 6), ethers.utils.parseEther('5000')],
+      0,
+      abiData
     )
 
     await tx.wait()
