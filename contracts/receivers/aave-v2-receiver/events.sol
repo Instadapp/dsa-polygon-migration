@@ -27,4 +27,12 @@ contract Events {
     );
 
     event LogMigrate(uint _id);
+
+    event LogFlashLoan(
+        address indexed sender,
+        address[] tokens,
+        uint[] amounts,
+        uint[] feeAmts,
+        uint route
+    );
 }

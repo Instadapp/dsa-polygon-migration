@@ -25,6 +25,15 @@ struct AaveData {
     address[] borrowTokens;
 }
 
+struct CastData {
+    address dsa;
+    uint route;
+    address[] tokens;
+    uint[] amounts;
+    string[] dsaTargets;
+    bytes[] dsaData;
+}
+
 interface IndexInterface {
     function master() external view returns (address);
 }
@@ -99,5 +108,9 @@ interface AaveInterface {
 }
 
 interface InstaListInterface {
-    function accountID(address) external view returns (uint);
+    function accountID(address) external view returns (uint64);
+}
+
+interface DSAInterface {
+    function castMigrate(string[] calldata _targets, bytes[] calldata _datas, address _origin) external payable returns (bytes32);
 }

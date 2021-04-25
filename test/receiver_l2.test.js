@@ -5,7 +5,8 @@ const { provider, deployContract } = waffle
 
 const Migrator = require("../artifacts/contracts/receivers/aave-v2-receiver/main.sol/InstaAaveV2MigratorReceiverImplementation.json")
 const TokenMappingContract = require("../artifacts/contracts/receivers/mapping/main.sol/InstaPolygonTokenMapping.json")
-const Implementations_m2Contract = require("../artifacts/contracts/implementation/aave-v2-migrator/main.sol/InstaImplementationM1.json")
+const Implementations_m2Contract = require("../artifacts/contracts/implementation/aave-v2-migrator/main.sol/InstaImplementationM2.json")
+const Funder = require("../artifacts/contracts/mock/funder.sol/Funder.json");
 
 const tokenMaps = {
   // polygon address : main net address
@@ -21,7 +22,7 @@ const tokenMaps = {
 
 // 
 describe("Migrator", function() {
-  let accounts, masterAddress, master, migrator, ethereum, instapool, tokenMapping, implementations_m2Contract
+  let accounts, masterAddress, master, migrator, ethereum, instapool, tokenMapping, receiverSigner
 
   const erc20Abi = [
     "function balanceOf(address) view returns (uint)",
@@ -47,6 +48,8 @@ describe("Migrator", function() {
 
   const instaConnectorsV2 = '0x0a0a82D2F86b9E46AE60E22FCE4e8b916F858Ddc'
   const instaImplementations = '0x39d3d5e7c11D61E072511485878dd84711c19d4A'
+
+  const receiverMsgSender = '0x0000000000000000000000000000000000001001'
   
 
   const maxValue = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
@@ -60,19 +63,26 @@ describe("Migrator", function() {
       params: [ masterAddress ]
     })
 
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [ receiverMsgSender ]
+    })
+
     accounts = await ethers.getSigners();
     master = ethers.provider.getSigner(masterAddress)
+
+    receiverSigner = ethers.provider.getSigner(receiverMsgSender)
 
     migrator = await deployContract(master, Migrator, [])
     
     // instapool = await deployContract(master, InstaPool, [])
     tokenMapping = await deployContract(master, TokenMappingContract, [Object.values(tokenMaps), Object.keys(tokenMaps)])
     console.log("Migrator deployed: ", migrator.address)
-    implementations_m2Contract = await deployContract(master, Implementations_m2Contract, [instaConnectorsV2, migrator.address])
+    // implementations_m2Contract = await deployContract(master, Implementations_m2Contract, [])
     
     console.log("Migrator deployed: ", migrator.address)
     console.log("tokenMapping deployed: ", tokenMapping.address)
-    console.log("implementations_m2Contract deployed: ", implementations_m2Contract.address)
+    // console.log("implementations_m2Contract deployed: ", implementations_m2Contract.address)
     
     await master.sendTransaction({
       to: migrator.address,
@@ -81,11 +91,11 @@ describe("Migrator", function() {
     ethereum = network.provider
   })
 
-  it("should set implementationsV2", async function() {
+  // it("should set implementationsV2", async function() {
 
-    const instaImplementationsContract = new ethers.Contract(instaImplementations, instaImplementationABI, master)
-    await instaImplementationsContract.connect(master).addImplementation(implementations_m2Contract.address, implementations_m2Sigs)
-  })
+  //   const instaImplementationsContract = new ethers.Contract(instaImplementations, instaImplementationABI, master)
+  //   await instaImplementationsContract.connect(master).addImplementation(implementations_m2Contract.address, implementations_m2Sigs)
+  // })
 
   it("should set tokens", async function() {
     const tx = await migrator.connect(master).addTokenSupport([...Object.keys(tokenMaps).slice(1, 3), "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"])
@@ -95,8 +105,17 @@ describe("Migrator", function() {
     expect(isMatic).to.be.true;
   })
 
+  it("fund receiver data setter", async function() {
+    const funder = await deployContract(master, Funder, [])
+    await master.sendTransaction({
+      to: funder.address,
+      value: ethers.utils.parseEther("1")
+    });
+    await funder.kill()
+  })
+
   it("should set data", async function() {
-    const tx = await migrator.onStateReceive("345", migrateData)
+    const tx = await migrator.connect(receiverSigner).onStateReceive("345", migrateData)
     const receipt = await tx.wait()
 
     const _migrateData = await migrator.positions("345")
@@ -226,7 +245,7 @@ describe("Migrator", function() {
 
   it("test migrate 2", async function() {
     const positionData = '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000150acc42e6751776c9e784eff830cb4f35ae98f300000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000056900d33ca7fc0000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000004a817c80000000000000000000000000000000000000000000000000000000004a817c800000000000000000000000000000000000000000000000878678326eac90000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000000000000000000000000000000000000000000003000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec70000000000000000000000006b175474e89094c44da98b954eedeac495271d0f'
-    let tx = await migrator.onStateReceive("346", positionData)
+    let tx = await migrator.connect(receiverSigner).onStateReceive("346", positionData)
     await tx.wait()
 
     tx = await migrator.migrate("346")
@@ -242,7 +261,7 @@ describe("Migrator", function() {
 
   it("test migrate 3", async function() {
     const positionData = '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000032d99500f7621c6dc5391395d419236383dbff9700000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000361a08405e8fd8000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000df847580000000000000000000000000000000000000000000000000000000009502f90000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000000000000000000000000000000000000000000002000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec7'
-    let tx = await migrator.onStateReceive("347", positionData)
+    let tx = await migrator.connect(receiverSigner).onStateReceive("347", positionData)
     await tx.wait()
 
     tx = await migrator.migrate("347")
@@ -258,7 +277,7 @@ describe("Migrator", function() {
 
   it("test migrate 4", async function() {
     const positionData = '0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000029601161ad5da8c54435f4065af3a0ee30cb24dd00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000d86821017a3f60000000000000000000000000000000000000000000000000000000000000b274d080000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000574fbde60000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000002260fac5e5542a773aa44fbcfedf7c193bc2c5990000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-    let tx = await migrator.onStateReceive("348", positionData)
+    let tx = await migrator.connect(receiverSigner).onStateReceive("348", positionData)
     await tx.wait()
 
     tx = await migrator.migrate("348")
