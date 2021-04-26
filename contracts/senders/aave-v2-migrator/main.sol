@@ -201,4 +201,6 @@ contract InstaAaveV2MigratorSenderImplementation is MigrateResolver {
 
         flashloanContract.initiateFlashLoan(data, ethAmt);
     }
+
+    receive() external payable {}
 }
