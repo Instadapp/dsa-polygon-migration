@@ -4,7 +4,7 @@
         "InstaMasterProxy": "0xa471D83e526B6b5D6c876088D34834B44D4064ff",
         "InstaPool": "0xd7e8E6f5deCc5642B77a5dD0e445965B128a585D",
         "ConnectAaveV2PolygonMigrator": "0x9686ce6ad5c3f7b212caf401b928c4bb3422e7ba",
-        "InstaAaveV2MigratorSenderImplementation": "0xC2CCD3790178006a6D27Eb39CE79F1560a51AF94"
+        "InstaAaveV2MigratorSenderImplementation": "0xBa577Da4cd3DD740c52Ff1193e0409f48569b327"
     },
     "137": {
         "InstaAaveV2MigratorReceiver": "0x4A090897f47993C2504144419751D6A91D79AbF4",
