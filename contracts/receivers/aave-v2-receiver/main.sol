@@ -145,18 +145,9 @@ contract InstaFlash is AaveV2Migrator {
         uint256[] calldata _amounts,	
         uint /*_route */, // no use of route but just to follow current flashloan pattern
         bytes calldata data
-    ) external nonReentrant isDSA {	
+    ) external isDSA {	
         uint _length = _tokens.length;
         require(_length == _amounts.length, "not-equal-length");
-
-        for (uint i = 0; i < _length; i++) {
-            for (uint j = 0; j < _length; j++) {
-                if (j != i) {
-                    require(_tokens[j] != _tokens[i], "token-repeated");
-                }
-            }
-        }
-
         uint[] memory iniBal = new uint[](_length);
         IERC20[] memory _tokenContracts = new IERC20[](_length);
         for (uint i = 0; i < _length; i++) {

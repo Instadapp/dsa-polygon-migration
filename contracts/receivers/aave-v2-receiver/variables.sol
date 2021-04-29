@@ -41,12 +41,6 @@ contract Variables {
      */
     address public constant maticReceiver = 0x0000000000000000000000000000000000001001;
 
-    /**
-    * @dev ReentrancyGuard
-    */
-    uint256 private constant _NOT_ENTERED = 1;
-    uint256 private constant _ENTERED = 2;
-
 
     // Storage variables //
 
@@ -72,32 +66,4 @@ contract Variables {
     * @dev last stateId from the onStateReceive
     */
     uint256 internal lastStateId;
-
-    /**
-    * @dev ReentrancyGuard status variable
-    */
-    uint256 private _reentrancyStatus;
-
-    // Modifer //
-
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     * Calling a `nonReentrant` function from another `nonReentrant`
-     * function is not supported. It is possible to prevent this from happening
-     * by making the `nonReentrant` function external, and make it call a
-     * `private` function that does the actual work.
-     */
-    modifier nonReentrant() {
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_reentrancyStatus != _ENTERED, "ReentrancyGuard: reentrant call");
-
-        // Any calls to nonReentrant after this point will fail
-        _reentrancyStatus = _ENTERED;
-
-        _;
-
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
-        _reentrancyStatus = _NOT_ENTERED;
-    }
 }
