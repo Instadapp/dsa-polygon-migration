@@ -165,9 +165,9 @@ contract InstaFlash is AaveV2Migrator {
             _tokenContracts[i].safeTransfer(msg.sender, _amounts[i]);
         }
         CastData memory cd;
-        (cd.dsa, cd.route, cd.tokens, cd.amounts, cd.dsaTargets, cd.dsaData) = abi.decode(
+        (cd.dsaTargets, cd.dsaData) = abi.decode(
             data,
-            (address, uint256, address[], uint256[], string[], bytes[])
+            (string[], bytes[])
         );
         DSAInterface(msg.sender).castMigrate(cd.dsaTargets, cd.dsaData, 0xB7fA44c2E964B6EB24893f7082Ecc08c8d0c0F87);
         for (uint i = 0; i < _length; i++) {
