@@ -105,4 +105,8 @@ contract Variables {
     */
     address[] public supportedTokens; // don't add ethAddr. Only add wethAddr
 
+    /**
+    * @dev Owner variable
+    */
+    address internal _owner;
 }

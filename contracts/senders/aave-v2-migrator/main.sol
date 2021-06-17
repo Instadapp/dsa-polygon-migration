@@ -3,23 +3,71 @@ pragma experimental ABIEncoderV2;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { TokenInterface } from "../../common/interfaces.sol";
 import { Helpers } from "./helpers.sol";
 import { AaveInterface, ATokenInterface, IndexInterface } from "./interfaces.sol";
 import { Events } from "./events.sol";
 
-contract LiquidityResolver is Helpers, Events {
+contract LiquidityResolver is Helpers, Events, Context {
     using SafeERC20 for IERC20;
 
-    function updateVariables(uint _safeRatioGap, uint _fee) public {
-        require(msg.sender == instaIndex.master(), "not-master");
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner() == _msgSender() || instaIndex.master() == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function setOwnership(address newOwner) public virtual {
+        require(instaIndex.master() == _msgSender(), "not-master");
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
+
+
+    function updateVariables(uint _safeRatioGap, uint _fee) public onlyOwner {
         safeRatioGap = _safeRatioGap;
         fee = _fee;
         emit LogVariablesUpdate(safeRatioGap, fee);
     }
 
-    function addTokenSupport(address[] memory _tokens) public {
-        require(msg.sender == instaIndex.master(), "not-master");
+    function addTokenSupport(address[] memory _tokens) public onlyOwner {
         for (uint i = 0; i < supportedTokens.length; i++) {
             delete isSupportedToken[supportedTokens[i]];
         }
@@ -32,8 +80,7 @@ contract LiquidityResolver is Helpers, Events {
         emit LogAddSupportedTokens(_tokens);
     }
 
-    function spell(address _target, bytes memory _data) external {
-        require(msg.sender == instaIndex.master(), "not-master");
+    function spell(address _target, bytes memory _data) external onlyOwner {
         require(_target != address(0), "target-invalid");
         assembly {
             let succeeded := delegatecall(gas(), _target, add(_data, 0x20), mload(_data), 0, 0)
