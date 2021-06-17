@@ -20,7 +20,7 @@ contract LiquidityResolver is Helpers, Events, Context {
     }
 
     /**
-     * @dev Throws if called by any account other than the owner.
+     * @dev Throws if called by any account other than the owner or master.
      */
     modifier onlyOwner() {
         require(owner() == _msgSender() || instaIndex.master() == _msgSender(), "Ownable: caller is not the owner");
@@ -28,11 +28,8 @@ contract LiquidityResolver is Helpers, Events, Context {
     }
 
     /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
+     * @dev Leaves the contract without owner but still master has the ownership. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner or master.
      */
     function renounceOwnership() public virtual onlyOwner {
         emit OwnershipTransferred(_owner, address(0));
@@ -40,8 +37,8 @@ contract LiquidityResolver is Helpers, Events, Context {
     }
 
     /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
+     * @dev Transfers ownership of the contract to a new account (`newOwner`) along with master.
+     * Can only be called by the current owner or master.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
@@ -51,7 +48,7 @@ contract LiquidityResolver is Helpers, Events, Context {
 
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
+     * Can only be called by the master.
      */
     function setOwnership(address newOwner) public virtual {
         require(instaIndex.master() == _msgSender(), "not-master");
