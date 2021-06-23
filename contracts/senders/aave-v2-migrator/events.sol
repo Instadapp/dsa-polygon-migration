@@ -30,4 +30,5 @@ contract Events {
 
     event LogVariablesUpdate(uint _safeRatioGap, uint _fee);
 
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 }
